@@ -65,4 +65,9 @@ const REPO_API_URL = "[https://api.github.com/repos/YOUR-USERNAME/YOUR-REPO-NAME
 ```
 
 3. Add your own `.json` world files into the `/script-jsons` folder.
-4. Update the bookmarklet URL to reference your GitHub username and repository path via `raw.githack.com`.
+4. **Update your bookmarklet URL** to point to your new repository by replacing `hummingbird-tori` and the repository name in your browser bookmark with your own details:
+
+```javascript
+javascript:(function(){const s=document.createElement('script');s.src='[https://raw.githack.com/YOUR-USERNAME/YOUR-REPO-NAME/main/loader.js';document.head.appendChild(s](https://raw.githack.com/YOUR-USERNAME/YOUR-REPO-NAME/main/loader.js';document.head.appendChild(s));})();
+
+```
