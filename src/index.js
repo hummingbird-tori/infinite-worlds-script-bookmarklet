@@ -1,11 +1,8 @@
-import { getJsonBox } from './utils/dom.js';
+import { SCRIPT_CONFIG } from './utils/config.js';
 
-const SCRIPT_VERSION = "v3.0 (Modular)";
-
-export function initWorkbench(baseUrl) {
+export function initWorkbench() {
     if (document.getElementById('iw-modal')) return;
 
-    // --- Build UI Shell ---
     const modal = document.createElement('div');
     modal.id = 'iw-modal';
     modal.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:760px;max-height:85vh;background:#17161c;color:#f3f4f6;border:1px solid #3f3c4d;border-radius:10px;z-index:99999;font-family:sans-serif;display:flex;flex-direction:column;box-shadow:0 10px 25px rgba(0,0,0,0.5);';
@@ -18,7 +15,7 @@ export function initWorkbench(baseUrl) {
                     <button id="iw-tab-sync-btn" style="background:#4f46e5;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">Cloud Sync</button>
                     <button id="iw-tab-editor-btn" style="background:transparent;color:#9ca3af;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">JSON Workbench</button>
                 </div>
-                <span style="background:#374151;color:#9ca3af;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;">${SCRIPT_VERSION}</span>
+                <span style="background:#374151;color:#9ca3af;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;">${SCRIPT_CONFIG.VERSION}</span>
             </div>
             <button id="iw-close" style="background:none;border:none;color:#9ca3af;font-size:18px;cursor:pointer;">&times;</button>
         </div>
