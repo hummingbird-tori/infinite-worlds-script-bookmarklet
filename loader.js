@@ -40,7 +40,7 @@
         <div style="padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;max-height:75vh;">
             
             <div style="background:#1f1e26;padding:10px 12px;border-radius:6px;border:1px solid #3f3c4d;display:flex;flex-direction:column;gap:6px;">
-                <label style="font-size:12px;color:#818cf8;font-weight:600;">Discovered Presets from GitHub (/script jsons):</label>
+                <label style="font-size:12px;color:#818cf8;font-weight:600;">Discovered Presets from GitHub (/script-jsons):</label>
                 <div style="display:flex;gap:8px;">
                     <select id="iw-preset-select" style="background:#111015;color:#fff;border:1px solid #3f3c4d;border-radius:4px;padding:6px;font-size:12px;flex-grow:1;">
                         <option value="">-- Loading discovered presets... --</option>
