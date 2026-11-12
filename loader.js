@@ -1,9 +1,9 @@
 (function() {
     if (document.getElementById('iw-sync-modal')) return;
 
-    // Updated with the correct folder path using a hyphen
+    // Corrected to use hyphen matching your GitHub folder name: script-jsons
     const REPO_API_URL = "https://api.github.com/repos/hummingbird-tori/infinite-worlds-script-bookmarklet/contents/script-jsons";
-    const SCRIPT_VERSION = "v2.5 (Updated: Nov 2026)";
+    const SCRIPT_VERSION = "v2.6 (Updated: Nov 2026)";
 
     // --- App Helpers ---
     function getBtn(t) {
@@ -181,7 +181,6 @@
             const container = document.getElementById('iw-selection-container');
             container.innerHTML = '';
             
-            // Full expanded list of arrays
             const arrays = [
                 'skills', 
                 'possibleCharacters', 
@@ -279,7 +278,7 @@
                     currentWorld[arrKey].push(newItem);
                 }
 
-                // Automatic Dependency Resolver: If importing a possibleCharacter, check and pull in any missing skills
+                // Automatic Dependency Resolver for Character Skills
                 if (arrKey === 'possibleCharacters' && Array.isArray(newItem.skills) && Array.isArray(extractedData['skills'])) {
                     if (!Array.isArray(currentWorld['skills'])) {
                         currentWorld['skills'] = [];
