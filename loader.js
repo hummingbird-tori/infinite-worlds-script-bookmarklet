@@ -1,7 +1,7 @@
 (function() {
     if (document.getElementById('iw-sync-modal')) return;
 
-    const REPO_API_URL = "https://api.github.com/repos/hummingbird-tori/infinite-worlds-script-bookmarklet/contents/script%20jsons";
+    const REPO_API_URL = "https://api.github.com/repos/hummingbird-tori/infinite-worlds-script-bookmarklet/contents/script-jsons";
 
     // --- App Helpers ---
     function getBtn(t) {
