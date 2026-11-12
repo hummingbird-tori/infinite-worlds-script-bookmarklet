@@ -1,9 +1,8 @@
 (function() {
     if (document.getElementById('iw-sync-modal')) return;
 
-    // Corrected to use hyphen matching your GitHub folder name: script-jsons
     const REPO_API_URL = "https://api.github.com/repos/hummingbird-tori/infinite-worlds-script-bookmarklet/contents/script-jsons";
-    const SCRIPT_VERSION = "v2.6 (Updated: Nov 2026)";
+    const SCRIPT_VERSION = "v2.7 (Updated: Nov 2026)";
 
     // --- App Helpers ---
     function getBtn(t) {
@@ -24,7 +23,7 @@
             }
         }
         for (let ta of document.querySelectorAll('textarea.anvil-text-area')) {
-            if (ta.clientHeight > 200 || (ta.value && ta.value.includes('possibleCharacters'))) return ta;
+            if (ta.clientHeight > 200 || (ta.value && (ta.value.includes('possibleCharacters') || ta.value.includes('descriptionRequest')))) return ta;
         }
         return document.querySelector('textarea.anvil-text-area');
     }
@@ -59,18 +58,18 @@
                 <button id="iw-download" style="background:#0284c7;color:#fff;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;">Download World .json</button>
             </div>
             
-            <p style="margin:0;font-size:12px;color:#9ca3af;"><b>Step 1:</b> Upload a local file, pick a preset, or paste JSON below, then click <b>Extract Arrays</b>.</p>
+            <p style="margin:0;font-size:12px;color:#9ca3af;"><b>Step 1:</b> Upload a local file, pick a preset, or paste JSON below, then click <b>Extract Data</b>.</p>
             <textarea id="iw-box" style="width:100%;height:130px;background:#111015;color:#e5e7eb;border:1px solid #3f3c4d;border-radius:6px;padding:8px;font-family:monospace;font-size:11px;box-sizing:border-box;resize:vertical;" placeholder="Paste world JSON here, upload, or load preset..."></textarea>
             
             <div style="display:flex;gap:8px;justify-content:space-between;align-items:center;">
                 <input type="file" id="iw-file-input" accept=".json,application/json" style="display:none;">
                 <button id="iw-upload-btn" style="background:#374151;color:#fff;border:1px solid #4b5563;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;">Upload .json File</button>
-                <button id="iw-extract" style="background:#4f46e5;color:#fff;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;">Extract Arrays</button>
+                <button id="iw-extract" style="background:#4f46e5;color:#fff;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;">Extract Data</button>
             </div>
             
             <hr style="border:0;border-top:1px solid #3f3c4d;margin:4px 0;">
-            <p style="margin:0;font-size:12px;color:#9ca3af;"><b>Step 2:</b> Select items to inject into your current active world.</p>
-            <div id="iw-selection-container" style="background:#111015;border:1px solid #3f3c4d;border-radius:6px;padding:8px;max-height:180px;overflow-y:auto;font-size:12px;color:#d1d5db;"><em>No arrays extracted yet. Load or paste JSON and click Extract.</em></div>
+            <p style="margin:0;font-size:12px;color:#9ca3af;"><b>Step 2:</b> Select arrays and specialist instructions to inject into your active world.</p>
+            <div id="iw-selection-container" style="background:#111015;border:1px solid #3f3c4d;border-radius:6px;padding:8px;max-height:180px;overflow-y:auto;font-size:12px;color:#d1d5db;"><em>No data extracted yet. Load or paste JSON and click Extract.</em></div>
             
             <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
                 <span id="iw-status" style="font-size:11px;color:#9ca3af;"></span>
@@ -181,6 +180,43 @@
             const container = document.getElementById('iw-selection-container');
             container.innerHTML = '';
             
+            let total = 0;
+
+            // 1. Render Specialist Instructions (Text fields & objects)
+            const specialistKeys = [
+                'descriptionRequest', 
+                'evaluationRequest', 
+                'summaryRequest', 
+                'videoPromptInstructions'
+            ];
+            
+            const availableSpecialists = specialistKeys.filter(k => extractedData[k] !== undefined && extractedData[k] !== null && extractedData[k] !== '');
+            if (availableSpecialists.length > 0) {
+                const header = document.createElement('div');
+                header.style.cssText = 'font-weight:bold;color:#f59e0b;margin-top:4px;margin-bottom:2px;font-size:12px;';
+                header.textContent = '--- Specialist Instructions (' + availableSpecialists.length + ') ---';
+                container.appendChild(header);
+
+                availableSpecialists.forEach(key => {
+                    total++;
+                    const label = document.createElement('label');
+                    label.style.cssText = 'display:flex;align-items:center;gap:6px;margin-bottom:4px;cursor:pointer;font-size:11px;';
+                    
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.checked = true;
+                    checkbox.dataset.type = 'specialist';
+                    checkbox.dataset.fieldKey = key;
+                    
+                    label.appendChild(checkbox);
+                    const span = document.createElement('span');
+                    span.textContent = '[Specialist Instruction] ' + key;
+                    label.appendChild(span);
+                    container.appendChild(label);
+                });
+            }
+
+            // 2. Render Array Items
             const arrays = [
                 'skills', 
                 'possibleCharacters', 
@@ -190,7 +226,6 @@
                 'triggerEvents', 
                 'trackedItems'
             ];
-            let total = 0;
             
             arrays.forEach(arrKey => {
                 if (Array.isArray(extractedData[arrKey]) && extractedData[arrKey].length > 0) {
@@ -207,6 +242,7 @@
                         const checkbox = document.createElement('input');
                         checkbox.type = 'checkbox';
                         checkbox.checked = true;
+                        checkbox.dataset.type = 'array';
                         checkbox.dataset.arrayKey = arrKey;
                         checkbox.dataset.itemIndex = idx;
                         
@@ -227,7 +263,7 @@
                 injectBtn.style.opacity = '1';
                 document.getElementById('iw-status').textContent = 'Found ' + total + ' items ready for selection.';
             } else {
-                container.innerHTML = '<em>No supported array items found in this JSON.</em>';
+                container.innerHTML = '<em>No supported items or specialist instructions found in this JSON.</em>';
                 injectBtn.setAttribute('disabled', 'true');
                 injectBtn.style.opacity = '0.5';
                 document.getElementById('iw-status').textContent = '';
@@ -257,41 +293,52 @@
             }
 
             checkboxes.forEach(cb => {
-                const arrKey = cb.dataset.arrayKey;
-                const idx = cb.dataset.itemIndex;
-                const newItem = extractedData[arrKey][idx];
+                const type = cb.dataset.type;
 
-                if (!Array.isArray(currentWorld[arrKey])) {
-                    currentWorld[arrKey] = [];
-                }
-
-                const existingIdx = currentWorld[arrKey].findIndex(ex => 
-                    (newItem.id && ex.id === newItem.id) || 
-                    (newItem.name && ex.name === newItem.name) || 
-                    (newItem.variableName && ex.variableName === newItem.variableName) ||
-                    (newItem.title && ex.title === newItem.title)
-                );
-
-                if (existingIdx >= 0) {
-                    currentWorld[arrKey][existingIdx] = newItem;
-                } else {
-                    currentWorld[arrKey].push(newItem);
-                }
-
-                // Automatic Dependency Resolver for Character Skills
-                if (arrKey === 'possibleCharacters' && Array.isArray(newItem.skills) && Array.isArray(extractedData['skills'])) {
-                    if (!Array.isArray(currentWorld['skills'])) {
-                        currentWorld['skills'] = [];
+                if (type === 'specialist') {
+                    // Handle text objects / specialist instructions
+                    const fieldKey = cb.dataset.fieldKey;
+                    if (extractedData[fieldKey] !== undefined) {
+                        currentWorld[fieldKey] = extractedData[fieldKey];
                     }
-                    newItem.skills.forEach(requiredSkillId => {
-                        const skillExists = currentWorld['skills'].some(s => s.id === requiredSkillId || s.name === requiredSkillId || s.variableName === requiredSkillId);
-                        if (!skillExists) {
-                            const matchingSkill = extractedData['skills'].find(s => s.id === requiredSkillId || s.name === requiredSkillId || s.variableName === requiredSkillId);
-                            if (matchingSkill) {
-                                currentWorld['skills'].push(matchingSkill);
-                            }
+                } else if (type === 'array') {
+                    // Handle array items
+                    const arrKey = cb.dataset.arrayKey;
+                    const idx = cb.dataset.itemIndex;
+                    const newItem = extractedData[arrKey][idx];
+
+                    if (!Array.isArray(currentWorld[arrKey])) {
+                        currentWorld[arrKey] = [];
+                    }
+
+                    const existingIdx = currentWorld[arrKey].findIndex(ex => 
+                        (newItem.id && ex.id === newItem.id) || 
+                        (newItem.name && ex.name === newItem.name) || 
+                        (newItem.variableName && ex.variableName === newItem.variableName) ||
+                        (newItem.title && ex.title === newItem.title)
+                    );
+
+                    if (existingIdx >= 0) {
+                        currentWorld[arrKey][existingIdx] = newItem;
+                    } else {
+                        currentWorld[arrKey].push(newItem);
+                    }
+
+                    // Automatic Dependency Resolver for Character Skills
+                    if (arrKey === 'possibleCharacters' && Array.isArray(newItem.skills) && Array.isArray(extractedData['skills'])) {
+                        if (!Array.isArray(currentWorld['skills'])) {
+                            currentWorld['skills'] = [];
                         }
-                    });
+                        newItem.skills.forEach(requiredSkillId => {
+                            const skillExists = currentWorld['skills'].some(s => s.id === requiredSkillId || s.name === requiredSkillId || s.variableName === requiredSkillId);
+                            if (!skillExists) {
+                                const matchingSkill = extractedData['skills'].find(s => s.id === requiredSkillId || s.name === requiredSkillId || s.variableName === requiredSkillId);
+                                if (matchingSkill) {
+                                    currentWorld['skills'].push(matchingSkill);
+                                }
+                            }
+                        });
+                    }
                 }
             });
 
@@ -299,7 +346,7 @@
             ta.dispatchEvent(new Event('input', { bubbles: true }));
             ta.dispatchEvent(new Event('change', { bubbles: true }));
             btn.click();
-            alert('Selected items (and any dependent skills) successfully injected and imported into your active world!');
+            alert('Selected specialist instructions, array items, and dependencies successfully injected and imported into your active world!');
         } catch(e) {
             alert('Injection Error: ' + e.message);
         }
