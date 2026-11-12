@@ -287,4 +287,135 @@
                         const newItem = extractedData[arrKey][idx];
 
                         if (!Array.isArray(currentWorld[arrKey])) currentWorld[arrKey] = [];
-                        if (typeof newItem === '
+                        if (typeof newItem === 'string') {
+                            if (!currentWorld[arrKey].includes(newItem)) currentWorld[arrKey].push(newItem);
+                        } else {
+                            const existingIdx = currentWorld[arrKey].findIndex(ex => 
+                                (newItem.id && ex.id === newItem.id) || 
+                                (newItem.characterId && ex.characterId === newItem.characterId) ||
+                                (newItem.name && ex.name === newItem.name) || 
+                                (newItem.variableName && ex.variableName === newItem.variableName) ||
+                                (newItem.title && ex.title === newItem.title)
+                            );
+                            if (existingIdx >= 0) currentWorld[arrKey][existingIdx] = newItem;
+                            else currentWorld[arrKey].push(newItem);
+                        }
+                    }
+                });
+
+                ta.value = JSON.stringify(currentWorld, null, 4);
+                ta.dispatchEvent(new Event('input', { bubbles: true }));
+                ta.dispatchEvent(new Event('change', { bubbles: true }));
+                btn.click();
+                alert('Selected items successfully injected and imported!');
+            } catch(e) {
+                alert('Injection Error: ' + e.message);
+            }
+        };
+    }
+
+    // --- 4. JSON WORKBENCH TAB (from src/tabs/editorTab.js) ---
+    function renderEditorTab(container) {
+        container.innerHTML = `
+            <div style="background:#1f1e26;padding:12px;border-radius:6px;border:1px solid #3f3c4d;display:flex;flex-direction:column;gap:8px;">
+                <h4 style="margin:0;color:#818cf8;font-size:13px;">Direct JSON Workbench & Reorder</h4>
+                <p style="margin:0;font-size:11px;color:#9ca3af;">Inspect and reorder active world elements directly or push custom JSON objects.</p>
+                
+                <div style="display:flex;gap:8px;">
+                    <button id="iw-edit-refresh" style="background:#4f46e5;color:#fff;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">Load Active World Data</button>
+                </div>
+            </div>
+            
+            <div id="iw-editor-output" style="background:#111015;border:1px solid #3f3c4d;border-radius:6px;padding:8px;max-height:220px;overflow-y:auto;font-size:11px;color:#d1d5db;">
+                <em>Click "Load Active World Data" to inspect arrays and reorder items.</em>
+            </div>
+        `;
+
+        container.querySelector('#iw-edit-refresh').onclick = () => {
+            const world = getActiveWorldJson();
+            const out = container.querySelector('#iw-editor-output');
+            if (!world) {
+                out.innerHTML = '<span style="color:#ef4444;">Could not read active world JSON. Make sure you refreshed raw JSON in the app.</span>';
+                return;
+            }
+
+            out.innerHTML = '';
+            
+            Object.keys(world).forEach(key => {
+                if (Array.isArray(world[key])) {
+                    const section = document.createElement('div');
+                    section.style.cssText = 'margin-bottom:8px;padding:6px;background:#17161c;border-radius:4px;border:1px solid #2d2a38;';
+                    
+                    const title = document.createElement('div');
+                    title.style.cssText = 'font-weight:bold;color:#f59e0b;font-size:11px;margin-bottom:4px;';
+                    title.textContent = `${key} (${world[key].length} items)`;
+                    section.appendChild(title);
+
+                    world[key].forEach((item, idx) => {
+                        const row = document.createElement('div');
+                        row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:2px 0;font-size:10px;border-bottom:1px solid #222;';
+                        
+                        const name = typeof item === 'string' ? item : (item.name || item.title || item.variableName || `Index ${idx}`);
+                        const span = document.createElement('span');
+                        span.textContent = `${idx + 1}. ${name}`;
+                        
+                        row.appendChild(span);
+                        section.appendChild(row);
+                    });
+
+                    out.appendChild(section);
+                }
+            });
+        };
+    }
+
+    // --- 5. MAIN MODAL & TAB COORDINATOR (from src/index.js) ---
+    const modal = document.createElement('div');
+    modal.id = 'iw-modal';
+    modal.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:760px;max-height:85vh;background:#17161c;color:#f3f4f6;border:1px solid #3f3c4d;border-radius:10px;z-index:99999;font-family:sans-serif;display:flex;flex-direction:column;box-shadow:0 10px 25px rgba(0,0,0,0.5);';
+    
+    modal.innerHTML = `
+        <div style="padding:12px 16px;background:#1f1e26;border-bottom:1px solid #3f3c4d;display:flex;justify-content:space-between;align-items:center;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <h3 style="margin:0;font-size:15px;color:#fff;">Infinite Worlds Workbench</h3>
+                <div style="display:flex;gap:4px;background:#111015;padding:2px;border-radius:6px;border:1px solid #3f3c4d;">
+                    <button id="iw-tab-sync-btn" style="background:#4f46e5;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">Cloud Sync</button>
+                    <button id="iw-tab-editor-btn" style="background:transparent;color:#9ca3af;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">JSON Workbench</button>
+                </div>
+                <span style="background:#374151;color:#9ca3af;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;">${SCRIPT_CONFIG.VERSION}</span>
+            </div>
+            <button id="iw-close" style="background:none;border:none;color:#9ca3af;font-size:18px;cursor:pointer;">&times;</button>
+        </div>
+        <div id="iw-tab-content" style="padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;max-height:75vh;flex-grow:1;"></div>
+    `;
+    document.body.appendChild(modal);
+
+    modal.querySelector('#iw-close').onclick = () => modal.remove();
+
+    const contentArea = modal.querySelector('#iw-tab-content');
+    const syncBtn = modal.querySelector('#iw-tab-sync-btn');
+    const editorBtn = modal.querySelector('#iw-tab-editor-btn');
+
+    function switchTab(tabName) {
+        contentArea.innerHTML = '';
+        if (tabName === 'sync') {
+            syncBtn.style.background = '#4f46e5';
+            syncBtn.style.color = '#fff';
+            editorBtn.style.background = 'transparent';
+            editorBtn.style.color = '#9ca3af';
+            renderSyncTab(contentArea);
+        } else if (tabName === 'editor') {
+            editorBtn.style.background = '#4f46e5';
+            editorBtn.style.color = '#fff';
+            syncBtn.style.background = 'transparent';
+            syncBtn.style.color = '#9ca3af';
+            renderEditorTab(contentArea);
+        }
+    }
+
+    syncBtn.onclick = () => switchTab('sync');
+    editorBtn.onclick = () => switchTab('editor');
+
+    // Default load Cloud Sync tab
+    switchTab('sync');
+})();
