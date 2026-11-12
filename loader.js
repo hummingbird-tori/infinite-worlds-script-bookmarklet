@@ -1,8 +1,9 @@
 (function() {
     if (document.getElementById('iw-sync-modal')) return;
 
-    const REPO_API_URL = "https://api.github.com/repos/hummingbird-tori/infinite-worlds-script-bookmarklet/contents/script%20jsons";
-    const SCRIPT_VERSION = "v2.3 (Updated: Nov 2026)"; // <-- Version badge for instant verification
+    // Updated with the correct folder path using a hyphen
+    const REPO_API_URL = "https://api.github.com/repos/hummingbird-tori/infinite-worlds-script-bookmarklet/contents/script-jsons";
+    const SCRIPT_VERSION = "v2.5 (Updated: Nov 2026)";
 
     // --- App Helpers ---
     function getBtn(t) {
@@ -37,14 +38,14 @@
         <div style="padding:12px 16px;background:#1f1e26;border-bottom:1px solid #3f3c4d;display:flex;justify-content:space-between;align-items:center;">
             <div style="display:flex;align-items:center;gap:10px;">
                 <h3 style="margin:0;font-size:15px;color:#fff;">Infinite Worlds Cloud & File Sync</h3>
-                <span id="iw-version-badge" style="background:#374151;color:#9ca3af;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;" title="Active script version running in browser">${SCRIPT_VERSION}</span>
+                <span id="iw-version-badge" style="background:#374151;color:#9ca3af;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;">${SCRIPT_VERSION}</span>
             </div>
             <button id="iw-close" style="background:none;border:none;color:#9ca3af;font-size:18px;cursor:pointer;">&times;</button>
         </div>
         <div style="padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;max-height:75vh;">
             
             <div style="background:#1f1e26;padding:10px 12px;border-radius:6px;border:1px solid #3f3c4d;display:flex;flex-direction:column;gap:6px;">
-                <label style="font-size:12px;color:#818cf8;font-weight:600;">Discovered Presets from GitHub (/script jsons):</label>
+                <label style="font-size:12px;color:#818cf8;font-weight:600;">Discovered Presets from GitHub (/script-jsons):</label>
                 <div style="display:flex;gap:8px;">
                     <select id="iw-preset-select" style="background:#111015;color:#fff;border:1px solid #3f3c4d;border-radius:4px;padding:6px;font-size:12px;flex-grow:1;">
                         <option value="">-- Loading discovered presets... --</option>
@@ -180,6 +181,7 @@
             const container = document.getElementById('iw-selection-container');
             container.innerHTML = '';
             
+            // Full expanded list of arrays
             const arrays = [
                 'skills', 
                 'possibleCharacters', 
@@ -277,7 +279,7 @@
                     currentWorld[arrKey].push(newItem);
                 }
 
-                // Auto-import required skills if importing a possibleCharacter
+                // Automatic Dependency Resolver: If importing a possibleCharacter, check and pull in any missing skills
                 if (arrKey === 'possibleCharacters' && Array.isArray(newItem.skills) && Array.isArray(extractedData['skills'])) {
                     if (!Array.isArray(currentWorld['skills'])) {
                         currentWorld['skills'] = [];
