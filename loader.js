@@ -2,7 +2,7 @@
     if (document.getElementById('iw-modal')) return;
 
     // --- CONFIGURATION & VERSION ---
-    const SCRIPT_VERSION = "v4.2";
+    const SCRIPT_VERSION = "v4.3";
     const REPO_API_URL = "https://api.github.com/repos/hummingbird-tori/infinite-worlds-script-bookmarklet/contents/script-jsons";
 
     // --- SUPPORTED ARRAYS LIST ---
@@ -306,9 +306,9 @@
                             const existingIdx = currentWorld[arrKey].findIndex(ex => 
                                 (newItem.id && ex.id === newItem.id) || 
                                 (newItem.characterId && ex.characterId === newItem.characterId) ||
-                                (newItem.name && ex.name === item.name) || 
-                                (newItem.variableName && ex.variableName === item.variableName) ||
-                                (newItem.title && ex.title === item.title)
+                                (newItem.name && ex.name === newItem.name) || 
+                                (newItem.variableName && ex.variableName === newItem.variableName) ||
+                                (newItem.title && ex.title === newItem.title)
                             );
                             if (existingIdx >= 0) currentWorld[arrKey][existingIdx] = newItem;
                             else currentWorld[arrKey].push(newItem);
@@ -329,7 +329,7 @@
         };
     }
 
-    // --- JSON WORKBENCH TAB (v4.2: Live Validation, Beautifier, & Editable JSON) ---
+    // --- JSON WORKBENCH TAB ---
     function renderEditorTab(container) {
         const t = THEMES[currentTheme];
         container.innerHTML = `
@@ -392,7 +392,6 @@
                 `;
                 section.appendChild(addDrawer);
 
-                // Live validation for New Item textarea
                 const newTa = addDrawer.querySelector('.iw-new-json');
                 const newStatus = addDrawer.querySelector('.iw-new-val-status');
                 newTa.oninput = () => {
@@ -490,7 +489,6 @@
                         row.appendChild(controls);
                         itemWrapper.appendChild(row);
 
-                        // Expandable JSON Editor Drawer with Live Validation & Beautifier
                         const editorDrawer = document.createElement('div');
                         editorDrawer.style.cssText = `display:none;flex-direction:column;gap:6px;padding:8px;background:${t.card};border-top:1px solid ${t.border};`;
                         
@@ -550,7 +548,6 @@
                             }
                         };
 
-                        // Live validation listener on item textarea
                         jsonTa.oninput = () => {
                             try {
                                 JSON.parse(jsonTa.value);
@@ -654,8 +651,6 @@
         });
     }
 
-    applyModalStyles();
-
     if (!testWorld) {
         modal.innerHTML = `
             <div id="iw-header" style="padding:12px 16px;background:${THEMES[currentTheme].surface};border-bottom:1px solid ${THEMES[currentTheme].border};display:flex;justify-content:space-between;align-items:center;cursor:move;">
@@ -676,6 +671,7 @@
             </div>
         `;
         document.body.appendChild(modal);
+        applyModalStyles();
         modal.querySelector('#iw-close').onclick = () => modal.remove();
         return;
     }
@@ -707,6 +703,7 @@
         <div id="iw-tab-content" style="padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;flex-grow:1;"></div>
     `;
     document.body.appendChild(modal);
+    applyModalStyles();
 
     // --- DRAG TO MOVE LOGIC ---
     const header = modal.querySelector('#iw-header');
@@ -749,7 +746,6 @@
             e.stopPropagation();
             currentTheme = btn.dataset.theme;
             applyModalStyles();
-            // Re-render active tab with new theme colors
             const activeTab = syncBtn.style.background !== 'transparent' ? 'sync' : 'editor';
             switchTab(activeTab);
         };
