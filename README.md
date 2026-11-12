@@ -1,6 +1,6 @@
 # Infinite Worlds Cloud & File Sync Workbench
 
-A lightweight, auto-updating multi-tab bookmarklet tool designed for **Infinite Worlds** to easily backup world JSON files, discover and load preset worlds straight from GitHub, selectively merge data (such as Specialist Instructions, `instructionBlocks`, `triggerEvents`, and `trackedItems`), and directly inspect JSON structures using the built-in JSON Workbench tab.
+A lightweight, auto-updating multi-tab bookmarklet tool designed for **Infinite Worlds** to easily backup world JSON files, discover and load preset worlds straight from GitHub, selectively merge data (such as Specialist Instructions, `instructionBlocks`, `triggerEvents`, and `trackedItems`), and directly manage, reorder, expand, and insert JSON array entries using the built-in JSON Workbench tab.
 
 ---
 
@@ -11,7 +11,7 @@ A lightweight, auto-updating multi-tab bookmarklet tool designed for **Infinite 
 3. Paste the following snippet into the **URL / Address** field:
 
 ```javascript
-javascript:(function(){const s=document.createElement('script');s.src='https://raw.githack.com/hummingbird-tori/infinite-worlds-script-bookmarklet/main/loader.js';document.head.appendChild(s);})();
+javascript:(function(){const s=document.createElement('script');s.src='[https://raw.githack.com/hummingbird-tori/infinite-worlds-script-bookmarklet/main/loader.js';document.head.appendChild(s](https://raw.githack.com/hummingbird-tori/infinite-worlds-script-bookmarklet/main/loader.js';document.head.appendChild(s));})();
 
 ```
 
@@ -19,10 +19,15 @@ javascript:(function(){const s=document.createElement('script');s.src='https://r
 
 ---
 
-## How to Use
+## How to Use & Setup
 
-1. **Open Your World:** Navigate to the world you want to modify or backup.
-2. **Access the JSON View:** Unhide and refresh the raw JSON object view inside the app (click **Refresh raw JSON** so the tool can detect your active world's data container).
+1. **Open Your World:** Open your world in the **Infinite Worlds World Editor**.
+2. **Enable Raw JSON:**
+* Check **"Shop optional features"**.
+* Click **"Misc advanced features (experimental)"**.
+* Select **"Show Raw Json"** and click **"Refresh raw JSON"** so the tool can detect your active world's data container.
+
+
 3. **Trigger the Tool:** Click your saved bookmark from your bookmarks bar to open the management modal.
 
 ### Tab 1: Cloud Sync
@@ -34,12 +39,16 @@ javascript:(function(){const s=document.createElement('script');s.src='https://r
 
 
 2. **Inspect & Extract:** Click **Extract Data** to parse the file. The tool scans for Specialist Instructions, `instructionBlocks`, `triggerEvents`, and `trackedItems` while automatically detecting and flagging conflicts/duplicates.
-3. **Select & Inject:** Use the section **Select All / Deselect All** toggles or check individual items you want to bring over, then click **Inject Selected Items to World** to merge them into your active world.
+3. **Select & Inject:** Use the section **Select All / Deselect All** toggles or check individual items you want to bring over, then click **Inject Selected Items to World** to merge them into your active world (automatically ensuring `enableAISpecificInstructionBlocks: true` is set).
 4. **Backup World:** Easily download a clean `.json` backup of your active world at any time.
 
 ### Tab 2: JSON Workbench
 
-1. Switch to the **JSON Workbench** tab to directly inspect active world properties, array lengths, and object fields.
+1. Click **Load Arrays** to pull your world's active merge arrays (`skills`, `instructionBlocks`, `trackedItems`, etc.).
+2. **Expand & Edit Raw JSON:** Click any entry in an array to expand its raw JSON inspector, edit fields directly, and click **Apply JSON Changes**.
+3. **Reorder Positions:** Type a new target position number into any item's **Pos:** input field to instantly shift its order.
+4. **Insert New Objects:** Click **+ Add New** on any array section, specify the insertion position, paste a raw JSON object, and click **Insert Object**.
+5. **Save Changes:** Review your staged modifications and click **Save & Import Changes** to push them back to your world.
 
 ---
 
@@ -51,7 +60,7 @@ Want to host your own library of preset worlds and scripts? Feel free to fork th
 2. Open `loader.js` and update the `REPO_API_URL` constant near the top of the file to point to your GitHub username and repository:
 
 ```javascript
-const REPO_API_URL = "https://api.github.com/repos/YOUR-USERNAME/YOUR-REPO-NAME/contents/script-jsons";
+const REPO_API_URL = "[https://api.github.com/repos/YOUR-USERNAME/YOUR-REPO-NAME/contents/script-jsons](https://api.github.com/repos/YOUR-USERNAME/YOUR-REPO-NAME/contents/script-jsons)";
 
 ```
 
