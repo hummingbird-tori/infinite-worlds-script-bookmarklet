@@ -2,7 +2,7 @@
     if (document.getElementById('iw-modal')) return;
 
     // --- CONFIGURATION & VERSION ---
-    const SCRIPT_VERSION = "v3.5";
+    const SCRIPT_VERSION = "v3.6";
     const REPO_API_URL = "https://api.github.com/repos/hummingbird-tori/infinite-worlds-script-bookmarklet/contents/script-jsons";
 
     // --- SUPPORTED ARRAYS LIST ---
@@ -316,65 +316,41 @@
         };
     }
 
-    // --- JSON WORKBENCH TAB (Targeted Array Manager & Reorderer) ---
+    // --- JSON WORKBENCH TAB (Staged Index-Type Reorderer) ---
     function renderEditorTab(container) {
         container.innerHTML = `
             <div style="background:#1f1e26;padding:10px 12px;border-radius:6px;border:1px solid #3f3c4d;display:flex;flex-direction:column;gap:6px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <h4 style="margin:0;color:#818cf8;font-size:13px;">Targeted Array Workbench & Reorder</h4>
-                    <button id="iw-edit-refresh" style="background:#4f46e5;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">Load Active World Arrays</button>
+                    <h4 style="margin:0;color:#818cf8;font-size:13px;">Targeted Array Staging & Reorder</h4>
+                    <div style="display:flex;gap:6px;">
+                        <button id="iw-edit-load" style="background:#4f46e5;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">Load Arrays</button>
+                        <button id="iw-edit-save" style="background:#059669;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;opacity:0.5;" disabled>Save & Import Changes</button>
+                    </div>
                 </div>
-                <p style="margin:0;font-size:11px;color:#9ca3af;">Manage, reorder, or remove items specifically within your merge arrays.</p>
+                <p style="margin:0;font-size:11px;color:#9ca3af;">Edit, reorder (by typing new position numbers), or remove items locally, then click Save & Import.</p>
             </div>
             
-            <div id="iw-editor-output" style="background:#111015;border:1px solid #3f3c4d;border-radius:6px;padding:8px;max-height:300px;overflow-y:auto;font-size:11px;color:#d1d5db;">
-                <em>Click "Load Active World Arrays" above to inspect and organize your arrays.</em>
+            <div id="iw-editor-output" style="background:#111015;border:1px solid #3f3c4d;border-radius:6px;padding:8px;max-height:280px;overflow-y:auto;font-size:11px;color:#d1d5db;">
+                <em>Click "Load Arrays" above to begin staging changes.</em>
             </div>
         `;
 
+        let stagedWorld = null;
         const out = container.querySelector('#iw-editor-output');
+        const saveBtn = container.querySelector('#iw-edit-save');
 
-        function commitWorldChanges(world) {
-            const ta = getJsonBox();
-            const btn = getBtn('Import JSON to world');
-            if (!ta || !btn) {
-                alert('App JSON box or import button not found. Make sure you refreshed raw JSON in the app.');
-                return false;
-            }
-            try {
-                ta.value = JSON.stringify(world, null, 4);
-                ta.dispatchEvent(new Event('input', { bubbles: true }));
-                ta.dispatchEvent(new Event('change', { bubbles: true }));
-                btn.click();
-                return true;
-            } catch(e) {
-                alert('Error saving changes: ' + e.message);
-                return false;
-            }
-        }
-
-        container.querySelector('#iw-edit-refresh').onclick = () => {
-            const world = getActiveWorldJson();
-            if (!world) {
-                out.innerHTML = '<span style="color:#ef4444;">Could not read active world JSON. Make sure you clicked "Refresh raw JSON" in the app first.</span>';
-                return;
-            }
-
+        function renderArraysView() {
             out.innerHTML = '';
-            
             SUPPORTED_ARRAYS.forEach(arrKey => {
-                if (!Array.isArray(world[arrKey])) world[arrKey] = [];
-                const arr = world[arrKey];
+                if (!Array.isArray(stagedWorld[arrKey])) stagedWorld[arrKey] = [];
+                const arr = stagedWorld[arrKey];
 
                 const section = document.createElement('div');
                 section.style.cssText = 'margin-bottom:10px;padding:8px;background:#17161c;border-radius:4px;border:1px solid #2d2a38;';
                 
                 const header = document.createElement('div');
-                header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;font-weight:bold;color:#f59e0b;font-size:12px;margin-bottom:6px;border-bottom:1px solid #222;padding-bottom:4px;';
-                
-                const titleSpan = document.createElement('span');
-                titleSpan.textContent = `${arrKey} (${arr.length} items)`;
-                header.appendChild(titleSpan);
+                header.style.cssText = 'font-weight:bold;color:#f59e0b;font-size:12px;margin-bottom:6px;border-bottom:1px solid #222;padding-bottom:4px;';
+                header.textContent = `${arrKey} (${arr.length} items)`;
                 section.appendChild(header);
 
                 if (arr.length === 0) {
@@ -392,52 +368,49 @@
                         
                         const name = typeof item === 'string' ? item : (item.name || item.variableName || item.title || `Item #${idx + 1}`);
                         const nameSpan = document.createElement('span');
-                        nameSpan.style.cssText = 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:340px;color:#e5e7eb;';
+                        nameSpan.style.cssText = 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:270px;color:#e5e7eb;';
                         nameSpan.textContent = `${idx + 1}. ${name}`;
                         row.appendChild(nameSpan);
 
-                        const btnGroup = document.createElement('div');
-                        btnGroup.style.cssText = 'display:flex;gap:4px;align-items:center;';
+                        const controls = document.createElement('div');
+                        controls.style.cssText = 'display:flex;gap:6px;align-items:center;';
 
-                        // Move Up
-                        const upBtn = document.createElement('button');
-                        upBtn.textContent = '▲';
-                        upBtn.style.cssText = `background:#374151;color:#fff;border:none;padding:2px 6px;border-radius:3px;cursor:pointer;font-size:10px;${idx === 0 ? 'opacity:0.3;cursor:default;' : ''}`;
-                        upBtn.onclick = () => {
-                            if (idx === 0) return;
-                            const temp = arr[idx];
-                            arr[idx] = arr[idx - 1];
-                            arr[idx - 1] = temp;
-                            if (commitWorldChanges(world)) container.querySelector('#iw-edit-refresh').click();
+                        // Position index input field
+                        const posLabel = document.createElement('span');
+                        posLabel.style.cssText = 'font-size:10px;color:#9ca3af;';
+                        posLabel.textContent = 'Pos:';
+
+                        const posInput = document.createElement('input');
+                        posInput.type = 'number';
+                        posInput.min = '1';
+                        posInput.max = arr.length;
+                        posInput.value = idx + 1;
+                        posInput.style.cssText = 'width:36px;background:#1f1e26;color:#fff;border:1px solid #3f3c4d;border-radius:3px;text-align:center;font-size:10px;padding:2px;';
+                        
+                        posInput.onchange = () => {
+                            let newPos = parseInt(posInput.value);
+                            if (isNaN(newPos)) return;
+                            newPos = Math.max(1, Math.min(arr.length, newPos));
+                            const targetIdx = newPos - 1;
+                            if (targetIdx === idx) return;
+
+                            const [movedItem] = arr.splice(idx, 1);
+                            arr.splice(targetIdx, 0, movedItem);
+                            renderArraysView();
                         };
 
-                        // Move Down
-                        const downBtn = document.createElement('button');
-                        downBtn.textContent = '▼';
-                        downBtn.style.cssText = `background:#374151;color:#fff;border:none;padding:2px 6px;border-radius:3px;cursor:pointer;font-size:10px;${idx === arr.length - 1 ? 'opacity:0.3;cursor:default;' : ''}`;
-                        downBtn.onclick = () => {
-                            if (idx === arr.length - 1) return;
-                            const temp = arr[idx];
-                            arr[idx] = arr[idx + 1];
-                            arr[idx + 1] = temp;
-                            if (commitWorldChanges(world)) container.querySelector('#iw-edit-refresh').click();
-                        };
-
-                        // Delete
                         const delBtn = document.createElement('button');
                         delBtn.textContent = '✕';
                         delBtn.style.cssText = 'background:#7f1d1d;color:#fca5a5;border:none;padding:2px 6px;border-radius:3px;cursor:pointer;font-size:10px;';
                         delBtn.onclick = () => {
-                            if (confirm(`Remove "${name}" from ${arrKey}?`)) {
-                                arr.splice(idx, 1);
-                                if (commitWorldChanges(world)) container.querySelector('#iw-edit-refresh').click();
-                            }
+                            arr.splice(idx, 1);
+                            renderArraysView();
                         };
 
-                        btnGroup.appendChild(upBtn);
-                        btnGroup.appendChild(downBtn);
-                        btnGroup.appendChild(delBtn);
-                        row.appendChild(btnGroup);
+                        controls.appendChild(posLabel);
+                        controls.appendChild(posInput);
+                        controls.appendChild(delBtn);
+                        row.appendChild(controls);
                         list.appendChild(row);
                     });
                     section.appendChild(list);
@@ -445,6 +418,40 @@
 
                 out.appendChild(section);
             });
+            saveBtn.removeAttribute('disabled');
+            saveBtn.style.opacity = '1';
+        }
+
+        container.querySelector('#iw-edit-load').onclick = () => {
+            const world = getActiveWorldJson();
+            if (!world) {
+                out.innerHTML = '<span style="color:#ef4444;">Could not read active world JSON. Make sure you clicked "Refresh raw JSON" in the app first.</span>';
+                saveBtn.setAttribute('disabled', 'true');
+                saveBtn.style.opacity = '0.5';
+                return;
+            }
+            stagedWorld = JSON.parse(JSON.stringify(world));
+            renderArraysView();
+        };
+
+        saveBtn.onclick = () => {
+            if (!stagedWorld) return;
+            const ta = getJsonBox();
+            const btn = getBtn('Import JSON to world');
+            if (!ta || !btn) {
+                alert('App JSON box or import button not found.');
+                return;
+            }
+            try {
+                stagedWorld.enableAISpecificInstructionBlock = true;
+                ta.value = JSON.stringify(stagedWorld, null, 4);
+                ta.dispatchEvent(new Event('input', { bubbles: true }));
+                ta.dispatchEvent(new Event('change', { bubbles: true }));
+                btn.click();
+                alert('Staged changes successfully saved and imported to world!');
+            } catch(e) {
+                alert('Save Error: ' + e.message);
+            }
         };
     }
 
