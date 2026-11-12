@@ -15,7 +15,7 @@ javascript:(function(){const s=document.createElement('script');s.src='[https://
 
 ```
 
-*(Because this points to `raw.githack.com`, any updates pushed to the repository automatically load the next time you click the bookmark—no manual reinstalling required.)*
+*(Because this points to `raw.githack.com`, updates pushed to the repository automatically load the next time you click the bookmark—no manual reinstalling required.)*
 
 ---
 
@@ -45,9 +45,9 @@ javascript:(function(){const s=document.createElement('script');s.src='[https://
 ### Tab 2: JSON Workbench
 
 1. Click **Load Arrays** to pull your world's active merge arrays (`skills`, `instructionBlocks`, `trackedItems`, etc.).
-2. **Expand & Edit Raw JSON:** Click any entry in an array to expand its raw JSON inspector, edit fields directly, and click **Apply JSON Changes**.
+2. **Expand & Edit Raw JSON:** Click any entry in an array to expand its raw JSON inspector with live syntax checking, beautify/minify formatting, edit fields directly, and click **Apply Changes**.
 3. **Reorder Positions:** Type a new target position number into any item's **Pos:** input field to instantly shift its order.
-4. **Insert New Objects:** Click **+ Add New** on any array section, specify the insertion position, paste a raw JSON object, and click **Insert Object**.
+4. **Insert New Objects:** Click **+ Add New** on any array section, specify the insertion position, paste a raw JSON object with live validation, and click **Insert Object**.
 5. **Save Changes:** Review your staged modifications and click **Save & Import Changes** to push them back to your world.
 
 ---
@@ -65,9 +65,11 @@ const REPO_API_URL = "[https://api.github.com/repos/YOUR-USERNAME/YOUR-REPO-NAME
 ```
 
 3. Add your own `.json` world files into the `/script-jsons` folder.
-4. **Update your bookmarklet URL** to point to your new repository by replacing `hummingbird-tori` and the repository name in your browser bookmark with your own details:
+4. **Update your bookmarklet URL** to point to your new repository by replacing the username and repository name in your browser bookmark:
 
 ```javascript
 javascript:(function(){const s=document.createElement('script');s.src='[https://raw.githack.com/YOUR-USERNAME/YOUR-REPO-NAME/main/loader.js';document.head.appendChild(s](https://raw.githack.com/YOUR-USERNAME/YOUR-REPO-NAME/main/loader.js';document.head.appendChild(s));})();
 
 ```
+
+> **Note on Update Propagation:** Due to CDN caching behavior via `raw.githack.com`, updates pushed to your repository may not always appear instantaneously. While the exact propagation timing can vary, updates have been observed to populate straight to the active bookmark without requiring a page refresh once the cache clears or fetches successfully.
