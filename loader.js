@@ -1,12 +1,9 @@
 (function() {
     if (document.getElementById('iw-sync-modal')) return;
 
-    // --- CONFIG: List your JSON filenames inside the /script jsons folder here ---
-    const PRESET_JSON_FILES = [
-        "samplejson.json"
-        // Add more filenames here as you add them to /script jsons
-    ];
-    const REPO_BASE_URL = "https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/script%20jsons/";
+    // Repo configuration (No hardcoded preset filenames needed!)
+    const REPO_API_URL = "https://api.github.com/repos/infinite-worlds-script-bookmarklet/contents/script%20jsons";
+    const RAW_BASE_URL = "https://raw.githubusercontent.com/infinite-worlds-script-bookmarklet/script%20jsons/main/"; // Fallback raw link structure
 
     // --- App Helpers ---
     function getBtn(t) {
@@ -44,12 +41,12 @@
         </div>
         <div style="padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;max-height:75vh;">
             
-            <!-- Preset Dropdown Row -->
+            <!-- Preset Dropdown Row (Populated via Discovery) -->
             <div style="background:#1f1e26;padding:10px 12px;border-radius:6px;border:1px solid #3f3c4d;display:flex;flex-direction:column;gap:6px;">
-                <label style="font-size:12px;color:#818cf8;font-weight:600;">Load Preset from GitHub (/script jsons):</label>
+                <label style="font-size:12px;color:#818cf8;font-weight:600;">Discovered Presets from GitHub (/script jsons):</label>
                 <div style="display:flex;gap:8px;">
                     <select id="iw-preset-select" style="background:#111015;color:#fff;border:1px solid #3f3c4d;border-radius:4px;padding:6px;font-size:12px;flex-grow:1;">
-                        <option value="">-- Select a hosted preset world --</option>
+                        <option value="">-- Loading discovered presets... --</option>
                     </select>
                     <button id="iw-load-preset" style="background:#4f46e5;color:#fff;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;">Load Preset</button>
                 </div>
@@ -82,29 +79,52 @@
     document.body.appendChild(d);
     document.getElementById('iw-close').onclick = () => d.remove();
 
-    // Populate dropdown options
     const selectEl = document.getElementById('iw-preset-select');
-    PRESET_JSON_FILES.forEach(filename => {
-        const opt = document.createElement('option');
-        opt.value = filename;
-        opt.textContent = filename;
-        selectEl.appendChild(opt);
-    });
 
-    // Load Preset from GitHub
+    // Automatically discover JSON files using GitHub API
+    async function discoverPresets() {
+        try {
+            const response = await fetch(REPO_API_URL);
+            if (!response.ok) throw new Error('Failed to fetch repo contents');
+            const files = await response.json();
+            
+            selectEl.innerHTML = '<option value="">-- Select a discovered preset world --</option>';
+            
+            let count = 0;
+            files.forEach(file => {
+                if (file.type === 'file' && file.name.endsWith('.json')) {
+                    const opt = document.createElement('option');
+                    opt.value = file.download_url; // GitHub provides direct raw download URLs in API responses!
+                    opt.textContent = file.name;
+                    selectEl.appendChild(opt);
+                    count++;
+                }
+            });
+
+            if (count === 0) {
+                selectEl.innerHTML = '<option value="">-- No .json files found in folder --</option>';
+            }
+        } catch (err) {
+            selectEl.innerHTML = '<option value="">-- Error loading presets via API --</option>';
+            console.error(err);
+        }
+    }
+    discoverPresets();
+
+    // Load selected preset file using its direct download URL
     document.getElementById('iw-load-preset').onclick = async () => {
-        const filename = selectEl.value;
-        if (!filename) {
+        const fileUrl = selectEl.value;
+        if (!fileUrl) {
             alert('Please select a preset file from the dropdown first.');
             return;
         }
         try {
             document.getElementById('iw-status').textContent = 'Loading preset from GitHub...';
-            const res = await fetch(REPO_BASE_URL + encodeURIComponent(filename));
+            const res = await fetch(fileUrl);
             if (!res.ok) throw new Error('Network response was not ok');
             const text = await res.text();
             document.getElementById('iw-box').value = text;
-            document.getElementById('iw-status').textContent = 'Loaded ' + filename + ' successfully!';
+            document.getElementById('iw-status').textContent = 'Loaded preset successfully!';
             document.getElementById('iw-extract').click();
         } catch(err) {
             alert('Failed to load preset: ' + err.message);
@@ -187,7 +207,7 @@
                         const nameDisplay = item.name || item.variableName || ('Item #' + (idx + 1) + ' (' + (item.id || 'No ID') + ')');
                         
                         label.appendChild(checkbox);
-                        const span = document.createElement('span');
+                        const span = document.createElement('span');ymes = span;
                         span.textContent = '[' + arrKey + '] ' + nameDisplay;
                         label.appendChild(span);
                         container.appendChild(label);
@@ -246,7 +266,7 @@
                     (newItem.variableName && ex.variableName === newItem.variableName)
                 );
 
-                if (existingIdx >= 0) {
+                if (existingIdx >=0) {
                     currentWorld[arrKey][existingIdx] = newItem;
                 } else {
                     currentWorld[arrKey].push(newItem);
@@ -257,4 +277,9 @@
             ta.dispatchEvent(new Event('input', { bubbles: true }));
             ta.dispatchEvent(new Event('change', { bubbles: true }));
             btn.click();
-            alert('Selected items
+            alert('Selected items successfully injected and imported into your active world!');
+        } catch(e) {
+            alert('Injection Error: '+e.message);
+        }
+    };
+})();
