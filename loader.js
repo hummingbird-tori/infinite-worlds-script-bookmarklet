@@ -2,7 +2,7 @@
     if (document.getElementById('iw-modal')) return;
 
     // --- CONFIGURATION & VERSION ---
-    const SCRIPT_VERSION = "v3.8";
+    const SCRIPT_VERSION = "v4.0";
     const REPO_API_URL = "https://api.github.com/repos/hummingbird-tori/infinite-worlds-script-bookmarklet/contents/script-jsons";
 
     // --- SUPPORTED ARRAYS LIST ---
@@ -319,18 +319,18 @@
         };
     }
 
-    // --- JSON WORKBENCH TAB ---
+    // --- JSON WORKBENCH TAB (v4.0: Expandable JSON Editors & Position Insertion) ---
     function renderEditorTab(container) {
         container.innerHTML = `
             <div style="background:#1f1e26;padding:10px 12px;border-radius:6px;border:1px solid #3f3c4d;display:flex;flex-direction:column;gap:6px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <h4 style="margin:0;color:#818cf8;font-size:13px;">Targeted Array Staging & Reorder</h4>
+                    <h4 style="margin:0;color:#818cf8;font-size:13px;">Targeted Array Workbench & Raw Editor</h4>
                     <div style="display:flex;gap:6px;">
                         <button id="iw-edit-load" style="background:#4f46e5;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">Load Arrays</button>
                         <button id="iw-edit-save" style="background:#059669;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;opacity:0.5;" disabled>Save & Import Changes</button>
                     </div>
                 </div>
-                <p style="margin:0;font-size:11px;color:#9ca3af;">Edit, reorder (by typing new position numbers), or remove items locally, then click Save & Import.</p>
+                <p style="margin:0;font-size:11px;color:#9ca3af;">Click any item to edit its raw JSON, reorder positions, insert new objects at specific indexes, or remove items.</p>
             </div>
             
             <div id="iw-editor-output" style="background:#111015;border:1px solid #3f3c4d;border-radius:6px;padding:8px;max-height:280px;overflow-y:auto;font-size:11px;color:#d1d5db;">
@@ -352,9 +352,51 @@
                 section.style.cssText = 'margin-bottom:10px;padding:8px;background:#17161c;border-radius:4px;border:1px solid #2d2a38;';
                 
                 const header = document.createElement('div');
-                header.style.cssText = 'font-weight:bold;color:#f59e0b;font-size:12px;margin-bottom:6px;border-bottom:1px solid #222;padding-bottom:4px;';
-                header.textContent = `${arrKey} (${arr.length} items)`;
+                header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;font-weight:bold;color:#f59e0b;font-size:12px;margin-bottom:6px;border-bottom:1px solid #222;padding-bottom:4px;';
+                
+                const titleSpan = document.createElement('span');
+                titleSpan.textContent = `${arrKey} (${arr.length} items)`;
+                
+                // Toggle "Add New Item" drawer button
+                const addToggleBtn = document.createElement('button');
+                addToggleBtn.textContent = '+ Add New';
+                addToggleBtn.style.cssText = 'background:#4f46e5;color:#fff;border:none;padding:2px 8px;border-radius:3px;cursor:pointer;font-size:10px;';
+                
+                header.appendChild(titleSpan);
+                header.appendChild(addToggleBtn);
                 section.appendChild(header);
+
+                // Add New Item Drawer (Hidden by default)
+                const addDrawer = document.createElement('div');
+                addDrawer.style.cssText = 'display:none;flex-direction:column;gap:6px;margin-bottom:8px;padding:6px;background:#111015;border-radius:4px;border:1px solid #3f3c4d;';
+                addDrawer.innerHTML = `
+                    <div style="font-size:10px;color:#818cf8;font-weight:bold;">Insert New Object into ${arrKey}:</div>
+                    <div style="display:flex;gap:6px;align-items:center;">
+                        <span style="font-size:10px;color:#9ca3af;">Insert at Pos:</span>
+                        <input type="number" class="iw-new-pos" min="1" max="${arr.length + 1}" value="${arr.length + 1}" style="width:40px;background:#1f1e26;color:#fff;border:1px solid #3f3c4d;border-radius:3px;text-align:center;font-size:10px;padding:2px;">
+                    </div>
+                    <textarea class="iw-new-json" placeholder="Paste valid JSON object here..." style="width:100%;height:60px;background:#17161c;color:#e5e7eb;border:1px solid #3f3c4d;border-radius:3px;font-family:monospace;font-size:10px;box-sizing:border-box;resize:vertical;"></textarea>
+                    <button class="iw-new-submit" style="background:#059669;color:#fff;border:none;padding:3px 8px;border-radius:3px;cursor:pointer;font-size:10px;align-self:flex-end;font-weight:bold;">Insert Object</button>
+                `;
+                section.appendChild(addDrawer);
+
+                addToggleBtn.onclick = () => {
+                    addDrawer.style.display = addDrawer.style.display === 'flex' ? 'none' : 'flex';
+                };
+
+                addDrawer.querySelector('.iw-new-submit').onclick = () => {
+                    const rawJson = addDrawer.querySelector('.iw-new-json').value.trim();
+                    let targetPos = parseInt(addDrawer.querySelector('.iw-new-pos').value);
+                    if (!rawJson) return alert('Please paste JSON for the new item.');
+                    try {
+                        const parsedObj = JSON.parse(rawJson);
+                        targetPos = isNaN(targetPos) ? arr.length + 1 : Math.max(1, Math.min(arr.length + 1, targetPos));
+                        arr.splice(targetPos - 1, 0, parsedObj);
+                        renderArraysView();
+                    } catch(e) {
+                        alert('Invalid JSON: ' + e.message);
+                    }
+                };
 
                 if (arr.length === 0) {
                     const empty = document.createElement('div');
@@ -366,13 +408,16 @@
                     list.style.cssText = 'display:flex;flex-direction:column;gap:4px;';
 
                     arr.forEach((item, idx) => {
+                        const itemWrapper = document.createElement('div');
+                        itemWrapper.style.cssText = 'display:flex;flex-direction:column;background:#111015;border-radius:4px;border:1px solid #222;font-size:11px;overflow:hidden;';
+
                         const row = document.createElement('div');
-                        row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:4px 6px;background:#111015;border-radius:4px;border:1px solid #222;font-size:11px;';
+                        row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:5px 6px;cursor:pointer;';
                         
                         const name = typeof item === 'string' ? item : (item.name || item.variableName || item.title || `Item #${idx + 1}`);
                         const nameSpan = document.createElement('span');
-                        nameSpan.style.cssText = 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:270px;color:#e5e7eb;';
-                        nameSpan.textContent = `${idx + 1}. ${name}`;
+                        nameSpan.style.cssText = 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:260px;color:#e5e7eb;font-weight:500;';
+                        nameSpan.textContent = `${idx + 1}. ${name} (Click to edit raw JSON)`;
                         row.appendChild(nameSpan);
 
                         const controls = document.createElement('div');
@@ -389,7 +434,8 @@
                         posInput.value = idx + 1;
                         posInput.style.cssText = 'width:36px;background:#1f1e26;color:#fff;border:1px solid #3f3c4d;border-radius:3px;text-align:center;font-size:10px;padding:2px;';
                         
-                        posInput.onchange = () => {
+                        posInput.onchange = (ev) => {
+                            ev.stopPropagation();
                             let newPos = parseInt(posInput.value);
                             if (isNaN(newPos)) return;
                             newPos = Math.max(1, Math.min(arr.length, newPos));
@@ -404,7 +450,8 @@
                         const delBtn = document.createElement('button');
                         delBtn.textContent = '✕';
                         delBtn.style.cssText = 'background:#7f1d1d;color:#fca5a5;border:none;padding:2px 6px;border-radius:3px;cursor:pointer;font-size:10px;';
-                        delBtn.onclick = () => {
+                        delBtn.onclick = (ev) => {
+                            ev.stopPropagation();
                             arr.splice(idx, 1);
                             renderArraysView();
                         };
@@ -413,7 +460,40 @@
                         controls.appendChild(posInput);
                         controls.appendChild(delBtn);
                         row.appendChild(controls);
-                        list.appendChild(row);
+                        itemWrapper.appendChild(row);
+
+                        // Expandable Raw JSON Editor Drawer
+                        const editorDrawer = document.createElement('div');
+                        editorDrawer.style.cssText = 'display:none;flex-direction:column;gap:6px;padding:8px;background:#0d0c10;border-top:1px solid #222;';
+                        
+                        const jsonTa = document.createElement('textarea');
+                        jsonTa.style.cssText = 'width:100%;height:100px;background:#17161c;color:#e5e7eb;border:1px solid #3f3c4d;border-radius:3px;font-family:monospace;font-size:10px;box-sizing:border-box;resize:vertical;';
+                        jsonTa.value = typeof item === 'string' ? item : JSON.stringify(item, null, 4);
+
+                        const applyJsonBtn = document.createElement('button');
+                        applyJsonBtn.textContent = 'Apply JSON Changes';
+                        applyJsonBtn.style.cssText = 'background:#4f46e5;color:#fff;border:none;padding:4px 10px;border-radius:3px;cursor:pointer;font-size:10px;align-self:flex-end;font-weight:bold;';
+                        
+                        applyJsonBtn.onclick = () => {
+                            try {
+                                const val = jsonTa.value.trim();
+                                arr[idx] = val.startsWith('{') || val.startsWith('[') ? JSON.parse(val) : val;
+                                renderArraysView();
+                            } catch(e) {
+                                alert('Invalid JSON format: ' + e.message);
+                            }
+                        };
+
+                        editorDrawer.appendChild(jsonTa);
+                        editorDrawer.appendChild(applyJsonBtn);
+                        itemWrapper.appendChild(editorDrawer);
+
+                        // Toggle drawer on row click
+                        row.onclick = () => {
+                            editorDrawer.style.display = editorDrawer.style.display === 'flex' ? 'none' : 'flex';
+                        };
+
+                        list.appendChild(itemWrapper);
                     });
                     section.appendChild(list);
                 }
@@ -446,7 +526,7 @@
                 return;
             }
             try {
-                stagedWorld.enableAISpecificInstructionBlock = true;
+                stagedWorld.enableAISpecificInstructionBlocks = true;
                 ta.value = JSON.stringify(stagedWorld, null, 4);
                 ta.dispatchEvent(new Event('input', { bubbles: true }));
                 ta.dispatchEvent(new Event('change', { bubbles: true }));
@@ -466,7 +546,6 @@
     modal.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:760px;max-height:85vh;background:#17161c;color:#f3f4f6;border:1px solid #3f3c4d;border-radius:10px;z-index:99999;font-family:sans-serif;display:flex;flex-direction:column;box-shadow:0 10px 25px rgba(0,0,0,0.5);';
     
     if (!testWorld) {
-        // Warning view if raw JSON container is not active/open
         modal.innerHTML = `
             <div style="padding:12px 16px;background:#1f1e26;border-bottom:1px solid #3f3c4d;display:flex;justify-content:space-between;align-items:center;">
                 <h3 style="margin:0;font-size:15px;color:#ef4444;">⚠️ Infinite Worlds Workbench - Setup Required</h3>
@@ -491,7 +570,6 @@
         return;
     }
 
-    // Normal multi-tab workbench UI
     modal.innerHTML = `
         <div style="padding:12px 16px;background:#1f1e26;border-bottom:1px solid #3f3c4d;display:flex;justify-content:space-between;align-items:center;">
             <div style="display:flex;align-items:center;gap:12px;">
