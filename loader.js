@@ -1,9 +1,7 @@
 (function() {
     if (document.getElementById('iw-sync-modal')) return;
 
-    // Repo configuration (No hardcoded preset filenames needed!)
-    const REPO_API_URL = "https://api.github.com/repos/infinite-worlds-script-bookmarklet/contents/script%20jsons";
-    const RAW_BASE_URL = "https://raw.githubusercontent.com/infinite-worlds-script-bookmarklet/script%20jsons/main/"; // Fallback raw link structure
+    const REPO_API_URL = "https://api.github.com/repos/hummingbird-tori/infinite-worlds-script-bookmarklet/contents/script%20jsons";
 
     // --- App Helpers ---
     function getBtn(t) {
@@ -41,7 +39,6 @@
         </div>
         <div style="padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;max-height:75vh;">
             
-            <!-- Preset Dropdown Row (Populated via Discovery) -->
             <div style="background:#1f1e26;padding:10px 12px;border-radius:6px;border:1px solid #3f3c4d;display:flex;flex-direction:column;gap:6px;">
                 <label style="font-size:12px;color:#818cf8;font-weight:600;">Discovered Presets from GitHub (/script jsons):</label>
                 <div style="display:flex;gap:8px;">
@@ -81,7 +78,6 @@
 
     const selectEl = document.getElementById('iw-preset-select');
 
-    // Automatically discover JSON files using GitHub API
     async function discoverPresets() {
         try {
             const response = await fetch(REPO_API_URL);
@@ -94,7 +90,7 @@
             files.forEach(file => {
                 if (file.type === 'file' && file.name.endsWith('.json')) {
                     const opt = document.createElement('option');
-                    opt.value = file.download_url; // GitHub provides direct raw download URLs in API responses!
+                    opt.value = file.download_url;
                     opt.textContent = file.name;
                     selectEl.appendChild(opt);
                     count++;
@@ -111,7 +107,6 @@
     }
     discoverPresets();
 
-    // Load selected preset file using its direct download URL
     document.getElementById('iw-load-preset').onclick = async () => {
         const fileUrl = selectEl.value;
         if (!fileUrl) {
@@ -132,7 +127,6 @@
         }
     };
 
-    // Download current world
     document.getElementById('iw-download').onclick = () => {
         const ta = getJsonBox();
         if (!ta || !ta.value.trim()) {
@@ -156,7 +150,6 @@
         }
     };
 
-    // File upload handling
     const fileInput = document.getElementById('iw-file-input');
     document.getElementById('iw-upload-btn').onclick = () => fileInput.click();
     fileInput.onchange = (e) => {
@@ -171,7 +164,6 @@
         reader.readAsText(file);
     };
 
-    // Extract arrays logic
     let extractedData = null;
     document.getElementById('iw-extract').onclick = () => {
         try {
@@ -207,7 +199,7 @@
                         const nameDisplay = item.name || item.variableName || ('Item #' + (idx + 1) + ' (' + (item.id || 'No ID') + ')');
                         
                         label.appendChild(checkbox);
-                        const span = document.createElement('span');ymes = span;
+                        const span = document.createElement('span');
                         span.textContent = '[' + arrKey + '] ' + nameDisplay;
                         label.appendChild(span);
                         container.appendChild(label);
@@ -231,7 +223,6 @@
         }
     };
 
-    // Inject selected items into active world
     document.getElementById('iw-inject-selected').onclick = () => {
         try {
             const ta = getJsonBox();
@@ -266,7 +257,7 @@
                     (newItem.variableName && ex.variableName === newItem.variableName)
                 );
 
-                if (existingIdx >=0) {
+                if (existingIdx >= 0) {
                     currentWorld[arrKey][existingIdx] = newItem;
                 } else {
                     currentWorld[arrKey].push(newItem);
@@ -274,12 +265,3 @@
             });
 
             ta.value = JSON.stringify(currentWorld, null, 4);
-            ta.dispatchEvent(new Event('input', { bubbles: true }));
-            ta.dispatchEvent(new Event('change', { bubbles: true }));
-            btn.click();
-            alert('Selected items successfully injected and imported into your active world!');
-        } catch(e) {
-            alert('Injection Error: '+e.message);
-        }
-    };
-})();
