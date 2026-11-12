@@ -2,7 +2,7 @@
     if (document.getElementById('iw-modal')) return;
 
     // --- CONFIGURATION & VERSION ---
-    const SCRIPT_VERSION = "v3.6";
+    const SCRIPT_VERSION = "v3.8";
     const REPO_API_URL = "https://api.github.com/repos/hummingbird-tori/infinite-worlds-script-bookmarklet/contents/script-jsons";
 
     // --- SUPPORTED ARRAYS LIST ---
@@ -34,7 +34,9 @@
 
     function getActiveWorldJson() {
         const ta = getJsonBox();
-        if (!ta || !ta.value.trim()) return null;
+        if (!ta || !ta.value || !ta.value.trim()) {
+            return null;
+        }
         try {
             return JSON.parse(ta.value);
         } catch(e) {
@@ -121,19 +123,18 @@
         };
 
         container.querySelector('#iw-download').onclick = () => {
-            const ta = getJsonBox();
-            if (!ta || !ta.value.trim()) return alert('App JSON box is empty. Click "Refresh raw JSON" first.');
             try {
-                const parsed = JSON.parse(ta.value);
-                const safeTitle = (parsed.title || 'infinite_worlds_export').replace(/[^a-z0-9]/gi, '_').toLowerCase();
-                const blob = new Blob([JSON.stringify(parsed, null, 4)], {type: 'application/json'});
+                const currentWorld = getActiveWorldJson();
+                if (!currentWorld) throw new Error('Active world JSON container not found or empty.');
+                const safeTitle = (currentWorld.title || 'infinite_worlds_export').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                const blob = new Blob([JSON.stringify(currentWorld, null, 4)], {type: 'application/json'});
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url; a.download = safeTitle + '.json';
                 document.body.appendChild(a); a.click(); a.remove();
                 URL.revokeObjectURL(url);
             } catch(e) {
-                alert('Failed to parse current world JSON: ' + e.message);
+                alert(e.message);
             }
         };
 
@@ -158,6 +159,7 @@
                 if (!val.trim()) return alert('Paste JSON or load a preset first.');
                 extractedData = JSON.parse(val);
                 const currentWorld = getActiveWorldJson();
+                if (!currentWorld) throw new Error('Active world JSON container not found or empty.');
                 const selContainer = container.querySelector('#iw-selection-container');
                 selContainer.innerHTML = '';
                 
@@ -263,7 +265,7 @@
                     injectBtn.setAttribute('disabled', 'true'); injectBtn.style.opacity = '0.5';
                 }
             } catch(e) {
-                alert('Invalid JSON: ' + e.message);
+                alert('Extract Error: ' + e.message);
             }
         };
 
@@ -272,7 +274,8 @@
                 const ta = getJsonBox();
                 const btn = getBtn('Import JSON to world');
                 if (!ta || !btn) return alert('App JSON box or import button not found.');
-                const currentWorld = JSON.parse(ta.value);
+                const currentWorld = getActiveWorldJson();
+                if (!currentWorld) throw new Error('Active world JSON container not found or empty.');
                 const checkboxes = container.querySelectorAll('#iw-selection-container input[type="checkbox"]:checked');
                 if (checkboxes.length === 0) return alert('No items selected.');
 
@@ -316,7 +319,7 @@
         };
     }
 
-    // --- JSON WORKBENCH TAB (Staged Index-Type Reorderer) ---
+    // --- JSON WORKBENCH TAB ---
     function renderEditorTab(container) {
         container.innerHTML = `
             <div style="background:#1f1e26;padding:10px 12px;border-radius:6px;border:1px solid #3f3c4d;display:flex;flex-direction:column;gap:6px;">
@@ -375,7 +378,6 @@
                         const controls = document.createElement('div');
                         controls.style.cssText = 'display:flex;gap:6px;align-items:center;';
 
-                        // Position index input field
                         const posLabel = document.createElement('span');
                         posLabel.style.cssText = 'font-size:10px;color:#9ca3af;';
                         posLabel.textContent = 'Pos:';
@@ -423,15 +425,16 @@
         }
 
         container.querySelector('#iw-edit-load').onclick = () => {
-            const world = getActiveWorldJson();
-            if (!world) {
-                out.innerHTML = '<span style="color:#ef4444;">Could not read active world JSON. Make sure you clicked "Refresh raw JSON" in the app first.</span>';
+            try {
+                const world = getActiveWorldJson();
+                if (!world) throw new Error('Active world JSON container not found. Please follow the setup instructions below.');
+                stagedWorld = JSON.parse(JSON.stringify(world));
+                renderArraysView();
+            } catch(e) {
+                out.innerHTML = `<span style="color:#ef4444;">${e.message}</span>`;
                 saveBtn.setAttribute('disabled', 'true');
                 saveBtn.style.opacity = '0.5';
-                return;
             }
-            stagedWorld = JSON.parse(JSON.stringify(world));
-            renderArraysView();
         };
 
         saveBtn.onclick = () => {
@@ -455,11 +458,40 @@
         };
     }
 
-    // --- MAIN MODAL & TAB COORDINATOR ---
+    // --- BOOTUP VALIDATION & MAIN MODAL CREATION ---
+    const testWorld = getActiveWorldJson();
+
     const modal = document.createElement('div');
     modal.id = 'iw-modal';
     modal.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:760px;max-height:85vh;background:#17161c;color:#f3f4f6;border:1px solid #3f3c4d;border-radius:10px;z-index:99999;font-family:sans-serif;display:flex;flex-direction:column;box-shadow:0 10px 25px rgba(0,0,0,0.5);';
     
+    if (!testWorld) {
+        // Warning view if raw JSON container is not active/open
+        modal.innerHTML = `
+            <div style="padding:12px 16px;background:#1f1e26;border-bottom:1px solid #3f3c4d;display:flex;justify-content:space-between;align-items:center;">
+                <h3 style="margin:0;font-size:15px;color:#ef4444;">⚠️ Infinite Worlds Workbench - Setup Required</h3>
+                <button id="iw-close" style="background:none;border:none;color:#9ca3af;font-size:18px;cursor:pointer;">&times;</button>
+            </div>
+            <div style="padding:20px;display:flex;flex-direction:column;gap:12px;font-size:13px;color:#d1d5db;line-height:1.5;">
+                <p style="margin:0;">This bookmarklet only works inside the <b>Infinite Worlds world editor</b> with the raw JSON view open and loaded.</p>
+                <div style="background:#111015;padding:12px;border-radius:6px;border:1px solid #3f3c4d;display:flex;flex-direction:column;gap:6px;">
+                    <b style="color:#818cf8;">How to open the required JSON view:</b>
+                    <ol style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;">
+                        <li>Open your world in the <b>Infinite Worlds World Editor</b>.</li>
+                        <li>Check <b>"Shop optional features"</b>.</li>
+                        <li>Click <b>"Misc advanced features (experimental)"</b>.</li>
+                        <li>Select <b>"Show Raw Json"</b> and click <b>"Refresh raw JSON"</b>.</li>
+                    </ol>
+                </div>
+                <p style="margin:0;color:#9ca3af;font-size:11px;">Once the raw JSON box is visible on your screen, click your bookmarklet again!</p>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        modal.querySelector('#iw-close').onclick = () => modal.remove();
+        return;
+    }
+
+    // Normal multi-tab workbench UI
     modal.innerHTML = `
         <div style="padding:12px 16px;background:#1f1e26;border-bottom:1px solid #3f3c4d;display:flex;justify-content:space-between;align-items:center;">
             <div style="display:flex;align-items:center;gap:12px;">
