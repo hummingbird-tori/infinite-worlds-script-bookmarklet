@@ -2,7 +2,7 @@
     if (document.getElementById('iw-sync-modal')) return;
 
     const REPO_API_URL = "https://api.github.com/repos/hummingbird-tori/infinite-worlds-script-bookmarklet/contents/script-jsons";
-    const SCRIPT_VERSION = "v2.8 (Updated: Nov 2026)";
+    const SCRIPT_VERSION = "v2.9 (Updated: Nov 2026)";
 
     // --- App Helpers ---
     function getBtn(t) {
@@ -103,8 +103,8 @@
             </div>
             
             <hr style="border:0;border-top:1px solid #3f3c4d;margin:4px 0;">
-            <p style="margin:0;font-size:12px;color:#9ca3af;"><b>Step 2:</b> Select items to inject. Conflicting/duplicate items are disabled by default with warnings.</p>
-            <div id="iw-selection-container" style="background:#111015;border:1px solid #3f3c4d;border-radius:6px;padding:8px;max-height:180px;overflow-y:auto;font-size:12px;color:#d1d5db;"><em>No data extracted yet. Load or paste JSON and click Extract.</em></div>
+            <p style="margin:0;font-size:12px;color:#9ca3af;"><b>Step 2:</b> Select items to inject. Use section toggle links to quickly select/deselect groups.</p>
+            <div id="iw-selection-container" style="background:#111015;border:1px solid #3f3c4d;border-radius:6px;padding:8px;max-height:190px;overflow-y:auto;font-size:12px;color:#d1d5db;"><em>No data extracted yet. Load or paste JSON and click Extract.</em></div>
             
             <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
                 <span id="iw-status" style="font-size:11px;color:#9ca3af;"></span>
@@ -219,6 +219,44 @@
             let total = 0;
             let conflictCount = 0;
 
+            // Helper to render section headers with Select/Deselect All toggles
+            function createSectionHeader(title, color, sectionClass) {
+                const header = document.createElement('div');
+                header.style.cssText = `display:flex;justify-content:space-between;align-items:center;font-weight:bold;color:${color};margin-top:10px;margin-bottom:4px;font-size:12px;border-bottom:1px solid #2d2a38;padding-bottom:2px;`;
+                
+                const titleSpan = document.createElement('span');
+                titleSpan.textContent = title;
+                
+                const actionsDiv = document.createElement('div');
+                actionsDiv.style.cssText = 'display:flex;gap:8px;font-size:10px;font-weight:normal;';
+                
+                const selectAllBtn = document.createElement('a');
+                selectAllBtn.href = '#';
+                selectAllBtn.style.cssText = 'color:#818cf8;text-decoration:none;cursor:pointer;';
+                selectAllBtn.textContent = 'Select All';
+                selectAllBtn.onclick = (ev) => {
+                    ev.preventDefault();
+                    container.querySelectorAll('.' + sectionClass).forEach(cb => cb.checked = true);
+                };
+                
+                const deselectAllBtn = document.createElement('a');
+                deselectAllBtn.href = '#';
+                deselectAllBtn.style.cssText = 'color:#9ca3af;text-decoration:none;cursor:pointer;';
+                deselectAllBtn.textContent = 'Deselect All';
+                deselectAllBtn.onclick = (ev) => {
+                    ev.preventDefault();
+                    container.querySelectorAll('.' + sectionClass).forEach(cb => cb.checked = false);
+                };
+                
+                actionsDiv.appendChild(selectAllBtn);
+                actionsDiv.appendChild(document.createTextNode('|'));
+                actionsDiv.appendChild(deselectAllBtn);
+                
+                header.appendChild(titleSpan);
+                header.appendChild(actionsDiv);
+                container.appendChild(header);
+            }
+
             // 1. Render Specialist Instructions
             const specialistKeys = [
                 'descriptionRequest', 
@@ -229,10 +267,7 @@
             
             const availableSpecialists = specialistKeys.filter(k => extractedData[k] !== undefined && extractedData[k] !== null && extractedData[k] !== '');
             if (availableSpecialists.length > 0) {
-                const header = document.createElement('div');
-                header.style.cssText = 'font-weight:bold;color:#f59e0b;margin-top:4px;margin-bottom:2px;font-size:12px;';
-                header.textContent = '--- Specialist Instructions (' + availableSpecialists.length + ') ---';
-                container.appendChild(header);
+                createSectionHeader('--- Specialist Instructions (' + availableSpecialists.length + ') ---', '#f59e0b', 'sec-specialist');
 
                 availableSpecialists.forEach(key => {
                     total++;
@@ -244,6 +279,7 @@
                     
                     const checkbox = document.createElement('input');
                     checkbox.type = 'checkbox';
+                    checkbox.className = 'sec-specialist';
                     checkbox.checked = !isDup; // Automatically unchecked if duplicate
                     checkbox.dataset.type = 'specialist';
                     checkbox.dataset.fieldKey = key;
@@ -273,10 +309,8 @@
             
             arrays.forEach(arrKey => {
                 if (Array.isArray(extractedData[arrKey]) && extractedData[arrKey].length > 0) {
-                    const header = document.createElement('div');
-                    header.style.cssText = 'font-weight:bold;color:#818cf8;margin-top:8px;margin-bottom:2px;font-size:12px;';
-                    header.textContent = '--- ' + arrKey + ' (' + extractedData[arrKey].length + ') ---';
-                    container.appendChild(header);
+                    const secClass = 'sec-' + arrKey;
+                    createSectionHeader('--- ' + arrKey + ' (' + extractedData[arrKey].length + ') ---', '#818cf8', secClass);
                     
                     extractedData[arrKey].forEach((item, idx) => {
                         total++;
@@ -288,6 +322,7 @@
                         
                         const checkbox = document.createElement('input');
                         checkbox.type = 'checkbox';
+                        checkbox.className = secClass;
                         checkbox.checked = !isDup; // Automatically unchecked if duplicate
                         checkbox.dataset.type = 'array';
                         checkbox.dataset.arrayKey = arrKey;
