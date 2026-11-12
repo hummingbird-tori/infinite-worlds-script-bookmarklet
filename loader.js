@@ -2,11 +2,20 @@
     if (document.getElementById('iw-modal')) return;
 
     // --- CONFIGURATION & VERSION ---
-    const SCRIPT_VERSION = "v4.0";
+    const SCRIPT_VERSION = "v4.2";
     const REPO_API_URL = "https://api.github.com/repos/hummingbird-tori/infinite-worlds-script-bookmarklet/contents/script-jsons";
 
     // --- SUPPORTED ARRAYS LIST ---
     const SUPPORTED_ARRAYS = ['skills', 'possibleCharacters', 'NPCs', 'loreBookEntries', 'instructionBlocks', 'triggerEvents', 'trackedItems'];
+
+    // --- THEMES PALETTE ---
+    const THEMES = {
+        dark: { bg: '#17161c', surface: '#1f1e26', card: '#111015', text: '#f3f4f6', subtext: '#9ca3af', border: '#3f3c4d', accent: '#4f46e5', inputBg: '#1f1e26' },
+        light: { bg: '#f3f4f6', surface: '#ffffff', card: '#f8fafc', text: '#1f2937', subtext: '#4b5563', border: '#cbd5e1', accent: '#4f46e5', inputBg: '#ffffff' },
+        cyber: { bg: '#09090b', surface: '#18181b', card: '#27272a', text: '#fafafa', subtext: '#a1a1aa', border: '#3f3f46', accent: '#06b6d4', inputBg: '#18181b' }
+    };
+
+    let currentTheme = 'dark';
 
     // --- DOM UTILITIES ---
     function getBtn(t) {
@@ -46,37 +55,38 @@
 
     // --- CLOUD SYNC TAB ---
     function renderSyncTab(container) {
+        const t = THEMES[currentTheme];
         container.innerHTML = `
-            <div style="background:#1f1e26;padding:10px 12px;border-radius:6px;border:1px solid #3f3c4d;display:flex;flex-direction:column;gap:6px;">
-                <label style="font-size:12px;color:#818cf8;font-weight:600;">Discovered Presets from GitHub (/script-jsons):</label>
+            <div style="background:${t.surface};padding:10px 12px;border-radius:6px;border:1px solid ${t.border};display:flex;flex-direction:column;gap:6px;">
+                <label style="font-size:12px;color:${t.accent};font-weight:600;">Discovered Presets from GitHub (/script-jsons):</label>
                 <div style="display:flex;gap:8px;">
-                    <select id="iw-preset-select" style="background:#111015;color:#fff;border:1px solid #3f3c4d;border-radius:4px;padding:6px;font-size:12px;flex-grow:1;">
+                    <select id="iw-preset-select" style="background:${t.inputBg};color:${t.text};border:1px solid ${t.border};border-radius:4px;padding:6px;font-size:12px;flex-grow:1;">
                         <option value="">-- Loading discovered presets... --</option>
                     </select>
-                    <button id="iw-load-preset" style="background:#4f46e5;color:#fff;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;">Load Preset</button>
+                    <button id="iw-load-preset" style="background:${t.accent};color:#fff;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;">Load Preset</button>
                 </div>
             </div>
 
-            <div style="display:flex;justify-content:space-between;align-items:center;background:#1f1e26;padding:8px 12px;border-radius:6px;border:1px solid #3f3c4d;">
-                <span style="font-size:12px;color:#d1d5db;"><b>Backup Current World:</b> Save active JSON to file</span>
+            <div style="display:flex;justify-content:space-between;align-items:center;background:${t.surface};padding:8px 12px;border-radius:6px;border:1px solid ${t.border};">
+                <span style="font-size:12px;color:${t.text};"><b>Backup Current World:</b> Save active JSON to file</span>
                 <button id="iw-download" style="background:#0284c7;color:#fff;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;">Download World .json</button>
             </div>
             
-            <p style="margin:0;font-size:12px;color:#9ca3af;"><b>Step 1:</b> Upload a local file, pick a preset, or paste JSON below, then click <b>Extract Data</b>.</p>
-            <textarea id="iw-box" style="width:100%;height:110px;background:#111015;color:#e5e7eb;border:1px solid #3f3c4d;border-radius:6px;padding:8px;font-family:monospace;font-size:11px;box-sizing:border-box;resize:vertical;" placeholder="Paste world JSON here, upload, or load preset..."></textarea>
+            <p style="margin:0;font-size:12px;color:${t.subtext};"><b>Step 1:</b> Upload a local file, pick a preset, or paste JSON below, then click <b>Extract Data</b>.</p>
+            <textarea id="iw-box" style="width:100%;height:110px;background:${t.inputBg};color:${t.text};border:1px solid ${t.border};border-radius:6px;padding:8px;font-family:monospace;font-size:11px;box-sizing:border-box;resize:vertical;" placeholder="Paste world JSON here, upload, or load preset..."></textarea>
             
             <div style="display:flex;gap:8px;justify-content:space-between;align-items:center;">
                 <input type="file" id="iw-file-input" accept=".json,application/json" style="display:none;">
-                <button id="iw-upload-btn" style="background:#374151;color:#fff;border:1px solid #4b5563;padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;">Upload .json File</button>
-                <button id="iw-extract" style="background:#4f46e5;color:#fff;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;">Extract Data</button>
+                <button id="iw-upload-btn" style="background:${t.card};color:${t.text};border:1px solid ${t.border};padding:6px 12px;border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;">Upload .json File</button>
+                <button id="iw-extract" style="background:${t.accent};color:#fff;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;">Extract Data</button>
             </div>
             
-            <hr style="border:0;border-top:1px solid #3f3c4d;margin:2px 0;">
-            <p style="margin:0;font-size:12px;color:#9ca3af;"><b>Step 2:</b> Select items to inject. Conflicts are automatically unchecked.</p>
-            <div id="iw-selection-container" style="background:#111015;border:1px solid #3f3c4d;border-radius:6px;padding:8px;max-height:160px;overflow-y:auto;font-size:12px;color:#d1d5db;"><em>No data extracted yet. Load or paste JSON and click Extract.</em></div>
+            <hr style="border:0;border-top:1px solid ${t.border};margin:2px 0;">
+            <p style="margin:0;font-size:12px;color:${t.subtext};"><b>Step 2:</b> Select items to inject. Conflicts are automatically unchecked.</p>
+            <div id="iw-selection-container" style="background:${t.card};border:1px solid ${t.border};border-radius:6px;padding:8px;max-height:160px;overflow-y:auto;font-size:12px;color:${t.text};"><em>No data extracted yet. Load or paste JSON and click Extract.</em></div>
             
             <div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px;">
-                <span id="iw-status" style="font-size:11px;color:#9ca3af;"></span>
+                <span id="iw-status" style="font-size:11px;color:${t.subtext};"></span>
                 <button id="iw-inject-selected" style="background:#059669;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;opacity:0.5;" disabled>Inject Selected Items to World</button>
             </div>
         `;
@@ -187,7 +197,7 @@
 
                 function createHeader(title, color, secClass) {
                     const header = document.createElement('div');
-                    header.style.cssText = `display:flex;justify-content:space-between;align-items:center;font-weight:bold;color:${color};margin-top:8px;margin-bottom:2px;font-size:12px;border-bottom:1px solid #2d2a38;padding-bottom:2px;`;
+                    header.style.cssText = `display:flex;justify-content:space-between;align-items:center;font-weight:bold;color:${color};margin-top:8px;margin-bottom:2px;font-size:12px;border-bottom:1px solid ${t.border};padding-bottom:2px;`;
                     
                     const titleSpan = document.createElement('span');
                     titleSpan.textContent = title;
@@ -196,11 +206,11 @@
                     actions.style.cssText = 'display:flex;gap:6px;font-size:10px;font-weight:normal;';
                     
                     const selAll = document.createElement('a');
-                    selAll.href = '#'; selAll.style.cssText = 'color:#818cf8;text-decoration:none;'; selAll.textContent = 'Select All';
+                    selAll.href = '#'; selAll.style.cssText = `color:${t.accent};text-decoration:none;`; selAll.textContent = 'Select All';
                     selAll.onclick = (ev) => { ev.preventDefault(); selContainer.querySelectorAll('.' + secClass).forEach(cb => cb.checked = true); };
                     
                     const deselAll = document.createElement('a');
-                    deselAll.href = '#'; deselAll.style.cssText = 'color:#9ca3af;text-decoration:none;'; deselAll.textContent = 'Deselect All';
+                    deselAll.href = '#'; deselAll.style.cssText = `color:${t.subtext};text-decoration:none;`; deselAll.textContent = 'Deselect All';
                     deselAll.onclick = (ev) => { ev.preventDefault(); selContainer.querySelectorAll('.' + secClass).forEach(cb => cb.checked = false); };
                     
                     actions.appendChild(selAll); actions.appendChild(document.createTextNode('|')); actions.appendChild(deselAll);
@@ -296,9 +306,9 @@
                             const existingIdx = currentWorld[arrKey].findIndex(ex => 
                                 (newItem.id && ex.id === newItem.id) || 
                                 (newItem.characterId && ex.characterId === newItem.characterId) ||
-                                (newItem.name && ex.name === newItem.name) || 
-                                (newItem.variableName && ex.variableName === newItem.variableName) ||
-                                (newItem.title && ex.title === newItem.title)
+                                (newItem.name && ex.name === item.name) || 
+                                (newItem.variableName && ex.variableName === item.variableName) ||
+                                (newItem.title && ex.title === item.title)
                             );
                             if (existingIdx >= 0) currentWorld[arrKey][existingIdx] = newItem;
                             else currentWorld[arrKey].push(newItem);
@@ -319,21 +329,22 @@
         };
     }
 
-    // --- JSON WORKBENCH TAB (v4.0: Expandable JSON Editors & Position Insertion) ---
+    // --- JSON WORKBENCH TAB (v4.2: Live Validation, Beautifier, & Editable JSON) ---
     function renderEditorTab(container) {
+        const t = THEMES[currentTheme];
         container.innerHTML = `
-            <div style="background:#1f1e26;padding:10px 12px;border-radius:6px;border:1px solid #3f3c4d;display:flex;flex-direction:column;gap:6px;">
+            <div style="background:${t.surface};padding:10px 12px;border-radius:6px;border:1px solid ${t.border};display:flex;flex-direction:column;gap:6px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <h4 style="margin:0;color:#818cf8;font-size:13px;">Targeted Array Workbench & Raw Editor</h4>
+                    <h4 style="margin:0;color:${t.accent};font-size:13px;">Targeted Array Workbench & Live JSON Validator</h4>
                     <div style="display:flex;gap:6px;">
-                        <button id="iw-edit-load" style="background:#4f46e5;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">Load Arrays</button>
+                        <button id="iw-edit-load" style="background:${t.accent};color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">Load Arrays</button>
                         <button id="iw-edit-save" style="background:#059669;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;opacity:0.5;" disabled>Save & Import Changes</button>
                     </div>
                 </div>
-                <p style="margin:0;font-size:11px;color:#9ca3af;">Click any item to edit its raw JSON, reorder positions, insert new objects at specific indexes, or remove items.</p>
+                <p style="margin:0;font-size:11px;color:${t.subtext};">Click any item to edit raw JSON with live syntax checking, beautify/format, reorder, or add new objects.</p>
             </div>
             
-            <div id="iw-editor-output" style="background:#111015;border:1px solid #3f3c4d;border-radius:6px;padding:8px;max-height:280px;overflow-y:auto;font-size:11px;color:#d1d5db;">
+            <div id="iw-editor-output" style="background:${t.card};border:1px solid ${t.border};border-radius:6px;padding:8px;max-height:320px;overflow-y:auto;font-size:11px;color:${t.text};">
                 <em>Click "Load Arrays" above to begin staging changes.</em>
             </div>
         `;
@@ -349,43 +360,60 @@
                 const arr = stagedWorld[arrKey];
 
                 const section = document.createElement('div');
-                section.style.cssText = 'margin-bottom:10px;padding:8px;background:#17161c;border-radius:4px;border:1px solid #2d2a38;';
+                section.style.cssText = `margin-bottom:10px;padding:8px;background:${t.card};border-radius:4px;border:1px solid ${t.border};`;
                 
                 const header = document.createElement('div');
-                header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;font-weight:bold;color:#f59e0b;font-size:12px;margin-bottom:6px;border-bottom:1px solid #222;padding-bottom:4px;';
+                header.style.cssText = `display:flex;justify-content:space-between;align-items:center;font-weight:bold;color:#f59e0b;font-size:12px;margin-bottom:6px;border-bottom:1px solid ${t.border};padding-bottom:4px;`;
                 
                 const titleSpan = document.createElement('span');
                 titleSpan.textContent = `${arrKey} (${arr.length} items)`;
                 
-                // Toggle "Add New Item" drawer button
                 const addToggleBtn = document.createElement('button');
                 addToggleBtn.textContent = '+ Add New';
-                addToggleBtn.style.cssText = 'background:#4f46e5;color:#fff;border:none;padding:2px 8px;border-radius:3px;cursor:pointer;font-size:10px;';
+                addToggleBtn.style.cssText = `background:${t.accent};color:#fff;border:none;padding:2px 8px;border-radius:3px;cursor:pointer;font-size:10px;`;
                 
                 header.appendChild(titleSpan);
                 header.appendChild(addToggleBtn);
                 section.appendChild(header);
 
-                // Add New Item Drawer (Hidden by default)
                 const addDrawer = document.createElement('div');
-                addDrawer.style.cssText = 'display:none;flex-direction:column;gap:6px;margin-bottom:8px;padding:6px;background:#111015;border-radius:4px;border:1px solid #3f3c4d;';
+                addDrawer.style.cssText = `display:none;flex-direction:column;gap:6px;margin-bottom:8px;padding:6px;background:${t.surface};border-radius:4px;border:1px solid ${t.border};`;
                 addDrawer.innerHTML = `
-                    <div style="font-size:10px;color:#818cf8;font-weight:bold;">Insert New Object into ${arrKey}:</div>
+                    <div style="font-size:10px;color:${t.accent};font-weight:bold;">Insert New Object into ${arrKey}:</div>
                     <div style="display:flex;gap:6px;align-items:center;">
-                        <span style="font-size:10px;color:#9ca3af;">Insert at Pos:</span>
-                        <input type="number" class="iw-new-pos" min="1" max="${arr.length + 1}" value="${arr.length + 1}" style="width:40px;background:#1f1e26;color:#fff;border:1px solid #3f3c4d;border-radius:3px;text-align:center;font-size:10px;padding:2px;">
+                        <span style="font-size:10px;color:${t.subtext};">Insert at Pos:</span>
+                        <input type="number" class="iw-new-pos" min="1" max="${arr.length + 1}" value="${arr.length + 1}" style="width:40px;background:${t.inputBg};color:${t.text};border:1px solid ${t.border};border-radius:3px;text-align:center;font-size:10px;padding:2px;">
                     </div>
-                    <textarea class="iw-new-json" placeholder="Paste valid JSON object here..." style="width:100%;height:60px;background:#17161c;color:#e5e7eb;border:1px solid #3f3c4d;border-radius:3px;font-family:monospace;font-size:10px;box-sizing:border-box;resize:vertical;"></textarea>
-                    <button class="iw-new-submit" style="background:#059669;color:#fff;border:none;padding:3px 8px;border-radius:3px;cursor:pointer;font-size:10px;align-self:flex-end;font-weight:bold;">Insert Object</button>
+                    <textarea class="iw-new-json" placeholder="Paste valid JSON object here..." style="width:100%;height:60px;background:${t.inputBg};color:${t.text};border:1px solid ${t.border};border-radius:3px;font-family:monospace;font-size:10px;box-sizing:border-box;resize:vertical;"></textarea>
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <span class="iw-new-val-status" style="font-size:9px;color:${t.subtext};"></span>
+                        <button class="iw-new-submit" style="background:#059669;color:#fff;border:none;padding:3px 8px;border-radius:3px;cursor:pointer;font-size:10px;font-weight:bold;">Insert Object</button>
+                    </div>
                 `;
                 section.appendChild(addDrawer);
+
+                // Live validation for New Item textarea
+                const newTa = addDrawer.querySelector('.iw-new-json');
+                const newStatus = addDrawer.querySelector('.iw-new-val-status');
+                newTa.oninput = () => {
+                    const val = newTa.value.trim();
+                    if (!val) { newStatus.textContent = ''; return; }
+                    try {
+                        JSON.parse(val);
+                        newStatus.textContent = '✓ Valid JSON';
+                        newStatus.style.color = '#10b981';
+                    } catch(e) {
+                        newStatus.textContent = '✕ Syntax Error: ' + e.message;
+                        newStatus.style.color = '#ef4444';
+                    }
+                };
 
                 addToggleBtn.onclick = () => {
                     addDrawer.style.display = addDrawer.style.display === 'flex' ? 'none' : 'flex';
                 };
 
                 addDrawer.querySelector('.iw-new-submit').onclick = () => {
-                    const rawJson = addDrawer.querySelector('.iw-new-json').value.trim();
+                    const rawJson = newTa.value.trim();
                     let targetPos = parseInt(addDrawer.querySelector('.iw-new-pos').value);
                     if (!rawJson) return alert('Please paste JSON for the new item.');
                     try {
@@ -400,7 +428,7 @@
 
                 if (arr.length === 0) {
                     const empty = document.createElement('div');
-                    empty.style.cssText = 'font-size:11px;color:#6b7280;font-style:italic;padding:2px 0;';
+                    empty.style.cssText = `font-size:11px;color:${t.subtext};font-style:italic;padding:2px 0;`;
                     empty.textContent = 'No items in this array.';
                     section.appendChild(empty);
                 } else {
@@ -409,14 +437,14 @@
 
                     arr.forEach((item, idx) => {
                         const itemWrapper = document.createElement('div');
-                        itemWrapper.style.cssText = 'display:flex;flex-direction:column;background:#111015;border-radius:4px;border:1px solid #222;font-size:11px;overflow:hidden;';
+                        itemWrapper.style.cssText = `display:flex;flex-direction:column;background:${t.surface};border-radius:4px;border:1px solid ${t.border};font-size:11px;overflow:hidden;`;
 
                         const row = document.createElement('div');
                         row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:5px 6px;cursor:pointer;';
                         
                         const name = typeof item === 'string' ? item : (item.name || item.variableName || item.title || `Item #${idx + 1}`);
                         const nameSpan = document.createElement('span');
-                        nameSpan.style.cssText = 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:260px;color:#e5e7eb;font-weight:500;';
+                        nameSpan.style.cssText = `overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:240px;color:${t.text};font-weight:500;`;
                         nameSpan.textContent = `${idx + 1}. ${name} (Click to edit raw JSON)`;
                         row.appendChild(nameSpan);
 
@@ -424,7 +452,7 @@
                         controls.style.cssText = 'display:flex;gap:6px;align-items:center;';
 
                         const posLabel = document.createElement('span');
-                        posLabel.style.cssText = 'font-size:10px;color:#9ca3af;';
+                        posLabel.style.cssText = `font-size:10px;color:${t.subtext};`;
                         posLabel.textContent = 'Pos:';
 
                         const posInput = document.createElement('input');
@@ -432,7 +460,7 @@
                         posInput.min = '1';
                         posInput.max = arr.length;
                         posInput.value = idx + 1;
-                        posInput.style.cssText = 'width:36px;background:#1f1e26;color:#fff;border:1px solid #3f3c4d;border-radius:3px;text-align:center;font-size:10px;padding:2px;';
+                        posInput.style.cssText = `width:36px;background:${t.inputBg};color:${t.text};border:1px solid ${t.border};border-radius:3px;text-align:center;font-size:10px;padding:2px;`;
                         
                         posInput.onchange = (ev) => {
                             ev.stopPropagation();
@@ -462,17 +490,55 @@
                         row.appendChild(controls);
                         itemWrapper.appendChild(row);
 
-                        // Expandable Raw JSON Editor Drawer
+                        // Expandable JSON Editor Drawer with Live Validation & Beautifier
                         const editorDrawer = document.createElement('div');
-                        editorDrawer.style.cssText = 'display:none;flex-direction:column;gap:6px;padding:8px;background:#0d0c10;border-top:1px solid #222;';
+                        editorDrawer.style.cssText = `display:none;flex-direction:column;gap:6px;padding:8px;background:${t.card};border-top:1px solid ${t.border};`;
                         
                         const jsonTa = document.createElement('textarea');
-                        jsonTa.style.cssText = 'width:100%;height:100px;background:#17161c;color:#e5e7eb;border:1px solid #3f3c4d;border-radius:3px;font-family:monospace;font-size:10px;box-sizing:border-box;resize:vertical;';
+                        jsonTa.style.cssText = `width:100%;height:110px;background:${t.inputBg};color:${t.text};border:1px solid ${t.border};border-radius:3px;font-family:monospace;font-size:10px;box-sizing:border-box;resize:vertical;`;
                         jsonTa.value = typeof item === 'string' ? item : JSON.stringify(item, null, 4);
 
+                        const drawerFooter = document.createElement('div');
+                        drawerFooter.style.cssText = 'display:flex;justify-content:space-between;align-items:center;';
+
+                        const valStatus = document.createElement('span');
+                        valStatus.style.cssText = 'font-size:9px;color:#10b981;';
+                        valStatus.textContent = '✓ Valid JSON';
+
+                        const btnGroup = document.createElement('div');
+                        btnGroup.style.cssText = 'display:flex;gap:6px;';
+
+                        const formatBtn = document.createElement('button');
+                        formatBtn.textContent = 'Beautify';
+                        formatBtn.style.cssText = `background:${t.surface};color:${t.text};border:1px solid ${t.border};padding:3px 8px;border-radius:3px;cursor:pointer;font-size:10px;`;
+                        formatBtn.onclick = () => {
+                            try {
+                                const parsed = JSON.parse(jsonTa.value);
+                                jsonTa.value = JSON.stringify(parsed, null, 4);
+                                valStatus.textContent = '✓ Valid JSON (Beautified)';
+                                valStatus.style.color = '#10b981';
+                            } catch(e) {
+                                alert('Cannot beautify due to syntax error: ' + e.message);
+                            }
+                        };
+
+                        const minifyBtn = document.createElement('button');
+                        minifyBtn.textContent = 'Minify';
+                        minifyBtn.style.cssText = `background:${t.surface};color:${t.text};border:1px solid ${t.border};padding:3px 8px;border-radius:3px;cursor:pointer;font-size:10px;`;
+                        minifyBtn.onclick = () => {
+                            try {
+                                const parsed = JSON.parse(jsonTa.value);
+                                jsonTa.value = JSON.stringify(parsed);
+                                valStatus.textContent = '✓ Valid JSON (Minified)';
+                                valStatus.style.color = '#10b981';
+                            } catch(e) {
+                                alert('Cannot minify due to syntax error: ' + e.message);
+                            }
+                        };
+
                         const applyJsonBtn = document.createElement('button');
-                        applyJsonBtn.textContent = 'Apply JSON Changes';
-                        applyJsonBtn.style.cssText = 'background:#4f46e5;color:#fff;border:none;padding:4px 10px;border-radius:3px;cursor:pointer;font-size:10px;align-self:flex-end;font-weight:bold;';
+                        applyJsonBtn.textContent = 'Apply';
+                        applyJsonBtn.style.cssText = `background:${t.accent};color:#fff;border:none;padding:3px 10px;border-radius:3px;cursor:pointer;font-size:10px;font-weight:bold;`;
                         
                         applyJsonBtn.onclick = () => {
                             try {
@@ -484,11 +550,29 @@
                             }
                         };
 
+                        // Live validation listener on item textarea
+                        jsonTa.oninput = () => {
+                            try {
+                                JSON.parse(jsonTa.value);
+                                valStatus.textContent = '✓ Valid JSON';
+                                valStatus.style.color = '#10b981';
+                            } catch(e) {
+                                valStatus.textContent = '✕ Syntax Error: ' + e.message;
+                                valStatus.style.color = '#ef4444';
+                            }
+                        };
+
+                        btnGroup.appendChild(formatBtn);
+                        btnGroup.appendChild(minifyBtn);
+                        btnGroup.appendChild(applyJsonBtn);
+
+                        drawerFooter.appendChild(valStatus);
+                        drawerFooter.appendChild(btnGroup);
+
                         editorDrawer.appendChild(jsonTa);
-                        editorDrawer.appendChild(applyJsonBtn);
+                        editorDrawer.appendChild(drawerFooter);
                         itemWrapper.appendChild(editorDrawer);
 
-                        // Toggle drawer on row click
                         row.onclick = () => {
                             editorDrawer.style.display = editorDrawer.style.display === 'flex' ? 'none' : 'flex';
                         };
@@ -507,7 +591,7 @@
         container.querySelector('#iw-edit-load').onclick = () => {
             try {
                 const world = getActiveWorldJson();
-                if (!world) throw new Error('Active world JSON container not found. Please follow the setup instructions below.');
+                if (!world) throw new Error('Active world JSON container not found.');
                 stagedWorld = JSON.parse(JSON.stringify(world));
                 renderArraysView();
             } catch(e) {
@@ -543,18 +627,45 @@
 
     const modal = document.createElement('div');
     modal.id = 'iw-modal';
-    modal.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:760px;max-height:85vh;background:#17161c;color:#f3f4f6;border:1px solid #3f3c4d;border-radius:10px;z-index:99999;font-family:sans-serif;display:flex;flex-direction:column;box-shadow:0 10px 25px rgba(0,0,0,0.5);';
     
+    const layouts = {
+        float: 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:800px;height:82vh;max-height:85vh;resize:both;overflow:hidden;',
+        sidebar: 'position:fixed;top:0;right:0;width:500px;height:100vh;transform:none;border-radius:0;border-left:1px solid;',
+        bottom: 'position:fixed;bottom:0;left:0;width:100vw;height:45vh;transform:none;border-radius:12px 12px 0 0;border-top:1px solid;',
+        max: 'position:fixed;top:0;left:0;width:100vw;height:100vh;transform:none;border-radius:0;'
+    };
+
+    let currentLayout = 'float';
+
+    function applyModalStyles() {
+        const t = THEMES[currentTheme];
+        modal.style.cssText = `background:${t.bg};color:${t.text};border:1px solid ${t.border};border-radius:10px;z-index:99999;font-family:sans-serif;display:flex;flex-direction:column;box-shadow:0 10px 25px rgba(0,0,0,0.5);${layouts[currentLayout]}`;
+        
+        modal.querySelectorAll('.iw-layout-btn').forEach(b => {
+            b.style.background = b.dataset.mode === currentLayout ? t.accent : t.card;
+            b.style.color = b.dataset.mode === currentLayout ? '#fff' : t.subtext;
+            b.style.border = `1px solid ${t.border}`;
+        });
+
+        modal.querySelectorAll('.iw-theme-btn').forEach(b => {
+            b.style.background = b.dataset.theme === currentTheme ? t.accent : t.card;
+            b.style.color = b.dataset.theme === currentTheme ? '#fff' : t.subtext;
+            b.style.border = `1px solid ${t.border}`;
+        });
+    }
+
+    applyModalStyles();
+
     if (!testWorld) {
         modal.innerHTML = `
-            <div style="padding:12px 16px;background:#1f1e26;border-bottom:1px solid #3f3c4d;display:flex;justify-content:space-between;align-items:center;">
+            <div id="iw-header" style="padding:12px 16px;background:${THEMES[currentTheme].surface};border-bottom:1px solid ${THEMES[currentTheme].border};display:flex;justify-content:space-between;align-items:center;cursor:move;">
                 <h3 style="margin:0;font-size:15px;color:#ef4444;">⚠️ Infinite Worlds Workbench - Setup Required</h3>
-                <button id="iw-close" style="background:none;border:none;color:#9ca3af;font-size:18px;cursor:pointer;">&times;</button>
+                <button id="iw-close" style="background:none;border:none;color:${THEMES[currentTheme].subtext};font-size:18px;cursor:pointer;">&times;</button>
             </div>
-            <div style="padding:20px;display:flex;flex-direction:column;gap:12px;font-size:13px;color:#d1d5db;line-height:1.5;">
+            <div style="padding:20px;display:flex;flex-direction:column;gap:12px;font-size:13px;color:${THEMES[currentTheme].text};line-height:1.5;">
                 <p style="margin:0;">This bookmarklet only works inside the <b>Infinite Worlds world editor</b> with the raw JSON view open and loaded.</p>
-                <div style="background:#111015;padding:12px;border-radius:6px;border:1px solid #3f3c4d;display:flex;flex-direction:column;gap:6px;">
-                    <b style="color:#818cf8;">How to open the required JSON view:</b>
+                <div style="background:${THEMES[currentTheme].card};padding:12px;border-radius:6px;border:1px solid ${THEMES[currentTheme].border};display:flex;flex-direction:column;gap:6px;">
+                    <b style="color:${THEMES[currentTheme].accent};">How to open the required JSON view:</b>
                     <ol style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;">
                         <li>Open your world in the <b>Infinite Worlds World Editor</b>.</li>
                         <li>Check <b>"Shop optional features"</b>.</li>
@@ -562,7 +673,6 @@
                         <li>Select <b>"Show Raw Json"</b> and click <b>"Refresh raw JSON"</b>.</li>
                     </ol>
                 </div>
-                <p style="margin:0;color:#9ca3af;font-size:11px;">Once the raw JSON box is visible on your screen, click your bookmarklet again!</p>
             </div>
         `;
         document.body.appendChild(modal);
@@ -570,21 +680,80 @@
         return;
     }
 
+    const t = THEMES[currentTheme];
     modal.innerHTML = `
-        <div style="padding:12px 16px;background:#1f1e26;border-bottom:1px solid #3f3c4d;display:flex;justify-content:space-between;align-items:center;">
-            <div style="display:flex;align-items:center;gap:12px;">
-                <h3 style="margin:0;font-size:15px;color:#fff;">Infinite Worlds Workbench</h3>
-                <div style="display:flex;gap:4px;background:#111015;padding:2px;border-radius:6px;border:1px solid #3f3c4d;">
-                    <button id="iw-tab-sync-btn" style="background:#4f46e5;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">Cloud Sync</button>
-                    <button id="iw-tab-editor-btn" style="background:transparent;color:#9ca3af;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">JSON Workbench</button>
+        <div id="iw-header" style="padding:10px 16px;background:${t.surface};border-bottom:1px solid ${t.border};display:flex;justify-content:space-between;align-items:center;cursor:move;flex-shrink:0;">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <h3 style="margin:0;font-size:14px;color:${t.text};">IW Workbench</h3>
+                <div style="display:flex;gap:3px;background:${t.card};padding:2px;border-radius:6px;border:1px solid ${t.border};">
+                    <button id="iw-tab-sync-btn" style="background:${t.accent};color:#fff;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">Cloud Sync</button>
+                    <button id="iw-tab-editor-btn" style="background:transparent;color:${t.subtext};border:none;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">JSON Workbench</button>
                 </div>
-                <span style="background:#374151;color:#9ca3af;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;">${SCRIPT_VERSION}</span>
+                <div style="display:flex;gap:2px;background:${t.card};padding:2px;border-radius:6px;border:1px solid ${t.border};">
+                    <button class="iw-layout-btn" data-mode="float" style="padding:3px 5px;border-radius:3px;cursor:pointer;font-size:9px;">Float</button>
+                    <button class="iw-layout-btn" data-mode="sidebar" style="padding:3px 5px;border-radius:3px;cursor:pointer;font-size:9px;">Sidebar</button>
+                    <button class="iw-layout-btn" data-mode="bottom" style="padding:3px 5px;border-radius:3px;cursor:pointer;font-size:9px;">Bottom</button>
+                    <button class="iw-layout-btn" data-mode="max" style="padding:3px 5px;border-radius:3px;cursor:pointer;font-size:9px;">Max</button>
+                </div>
+                <div style="display:flex;gap:2px;background:${t.card};padding:2px;border-radius:6px;border:1px solid ${t.border};">
+                    <button class="iw-theme-btn" data-theme="dark" style="padding:3px 5px;border-radius:3px;cursor:pointer;font-size:9px;">Dark</button>
+                    <button class="iw-theme-btn" data-theme="light" style="padding:3px 5px;border-radius:3px;cursor:pointer;font-size:9px;">Light</button>
+                    <button class="iw-theme-btn" data-theme="cyber" style="padding:3px 5px;border-radius:3px;cursor:pointer;font-size:9px;">Cyber</button>
+                </div>
+                <span style="background:${t.card};color:${t.subtext};padding:2px 5px;border-radius:4px;font-size:9px;font-weight:600;border:1px solid ${t.border};">${SCRIPT_VERSION}</span>
             </div>
-            <button id="iw-close" style="background:none;border:none;color:#9ca3af;font-size:18px;cursor:pointer;">&times;</button>
+            <button id="iw-close" style="background:none;border:none;color:${t.subtext};font-size:18px;cursor:pointer;padding:0 4px;">&times;</button>
         </div>
-        <div id="iw-tab-content" style="padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;max-height:75vh;flex-grow:1;"></div>
+        <div id="iw-tab-content" style="padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;flex-grow:1;"></div>
     `;
     document.body.appendChild(modal);
+
+    // --- DRAG TO MOVE LOGIC ---
+    const header = modal.querySelector('#iw-header');
+    let isDragging = false, startX, startY;
+
+    header.onmousedown = (e) => {
+        if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || currentLayout !== 'float') return;
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        const rect = modal.getBoundingClientRect();
+        modal.style.transform = 'none';
+        modal.style.left = rect.left + 'px';
+        modal.style.top = rect.top + 'px';
+
+        document.onmousemove = (em) => {
+            if (!isDragging) return;
+            modal.style.left = (rect.left + (em.clientX - startX)) + 'px';
+            modal.style.top = (rect.top + (em.clientY - startY)) + 'px';
+        };
+
+        document.onmouseup = () => {
+            isDragging = false;
+            document.onmousemove = null;
+            document.onmouseup = null;
+        };
+    };
+
+    // --- LAYOUT & THEME SWITCHING ---
+    modal.querySelectorAll('.iw-layout-btn').forEach(btn => {
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            currentLayout = btn.dataset.mode;
+            applyModalStyles();
+        };
+    });
+
+    modal.querySelectorAll('.iw-theme-btn').forEach(btn => {
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            currentTheme = btn.dataset.theme;
+            applyModalStyles();
+            // Re-render active tab with new theme colors
+            const activeTab = syncBtn.style.background !== 'transparent' ? 'sync' : 'editor';
+            switchTab(activeTab);
+        };
+    });
 
     modal.querySelector('#iw-close').onclick = () => modal.remove();
 
@@ -593,18 +762,19 @@
     const editorBtn = modal.querySelector('#iw-tab-editor-btn');
 
     function switchTab(tabName) {
+        const ct = THEMES[currentTheme];
         contentArea.innerHTML = '';
         if (tabName === 'sync') {
-            syncBtn.style.background = '#4f46e5';
+            syncBtn.style.background = ct.accent;
             syncBtn.style.color = '#fff';
             editorBtn.style.background = 'transparent';
-            editorBtn.style.color = '#9ca3af';
+            editorBtn.style.color = ct.subtext;
             renderSyncTab(contentArea);
         } else if (tabName === 'editor') {
-            editorBtn.style.background = '#4f46e5';
+            editorBtn.style.background = ct.accent;
             editorBtn.style.color = '#fff';
             syncBtn.style.background = 'transparent';
-            syncBtn.style.color = '#9ca3af';
+            syncBtn.style.color = ct.subtext;
             renderEditorTab(contentArea);
         }
     }
