@@ -1,7 +1,7 @@
 (function() {
     if (document.getElementById('iw-sync-modal')) return;
 
-    const REPO_API_URL = "https://api.github.com/repos/hummingbird-tori/infinite-worlds-script-bookmarklet/contents/script-jsons";
+    const REPO_API_URL = "https://api.github.com/repos/hummingbird-tori/infinite-worlds-script-bookmarklet/contents/script%20jsons";
 
     // --- App Helpers ---
     function getBtn(t) {
@@ -30,7 +30,7 @@
     // --- Build UI ---
     const d = document.createElement('div');
     d.id = 'iw-sync-modal';
-    d.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:700px;max-height:85vh;background:#17161c;color:#f3f4f6;border:1px solid #3f3c4d;border-radius:10px;z-index:99999;font-family:sans-serif;display:flex;flex-direction:column;box-shadow:0 10px 25px rgba(0,0,0,0.5);';
+    d.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:720px;max-height:85vh;background:#17161c;color:#f3f4f6;border:1px solid #3f3c4d;border-radius:10px;z-index:99999;font-family:sans-serif;display:flex;flex-direction:column;box-shadow:0 10px 25px rgba(0,0,0,0.5);';
     
     d.innerHTML = `
         <div style="padding:12px 16px;background:#1f1e26;border-bottom:1px solid #3f3c4d;display:flex;justify-content:space-between;align-items:center;">
@@ -40,7 +40,7 @@
         <div style="padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;max-height:75vh;">
             
             <div style="background:#1f1e26;padding:10px 12px;border-radius:6px;border:1px solid #3f3c4d;display:flex;flex-direction:column;gap:6px;">
-                <label style="font-size:12px;color:#818cf8;font-weight:600;">Discovered Presets from GitHub (/script-jsons):</label>
+                <label style="font-size:12px;color:#818cf8;font-weight:600;">Discovered Presets from GitHub (/script jsons):</label>
                 <div style="display:flex;gap:8px;">
                     <select id="iw-preset-select" style="background:#111015;color:#fff;border:1px solid #3f3c4d;border-radius:4px;padding:6px;font-size:12px;flex-grow:1;">
                         <option value="">-- Loading discovered presets... --</option>
@@ -175,13 +175,23 @@
             extractedData = JSON.parse(val);
             const container = document.getElementById('iw-selection-container');
             container.innerHTML = '';
-            const arrays = ['instructionBlocks', 'triggerEvents', 'trackedItems'];
+            
+            // Expanded array categories
+            const arrays = [
+                'skills', 
+                'possibleCharacters', 
+                'NPCs', 
+                'loreBookEntries', 
+                'instructionBlocks', 
+                'triggerEvents', 
+                'trackedItems'
+            ];
             let total = 0;
             
             arrays.forEach(arrKey => {
                 if (Array.isArray(extractedData[arrKey]) && extractedData[arrKey].length > 0) {
                     const header = document.createElement('div');
-                    header.style.cssText = 'font-weight:bold;color:#818cf8;margin-top:6px;margin-bottom:2px;font-size:12px;';
+                    header.style.cssText = 'font-weight:bold;color:#818cf8;margin-top:8px;margin-bottom:2px;font-size:12px;';
                     header.textContent = '--- ' + arrKey + ' (' + extractedData[arrKey].length + ') ---';
                     container.appendChild(header);
                     
@@ -196,7 +206,7 @@
                         checkbox.dataset.arrayKey = arrKey;
                         checkbox.dataset.itemIndex = idx;
                         
-                        const nameDisplay = item.name || item.variableName || ('Item #' + (idx + 1) + ' (' + (item.id || 'No ID') + ')');
+                        const nameDisplay = item.name || item.variableName || item.title || ('Item #' + (idx + 1) + ' (' + (item.id || 'No ID') + ')');
                         
                         label.appendChild(checkbox);
                         const span = document.createElement('span');
@@ -213,7 +223,7 @@
                 injectBtn.style.opacity = '1';
                 document.getElementById('iw-status').textContent = 'Found ' + total + ' items ready for selection.';
             } else {
-                container.innerHTML = '<em>No instructionBlocks, triggerEvents, or trackedItems found in this JSON.</em>';
+                container.innerHTML = '<em>No supported array items found in this JSON.</em>';
                 injectBtn.setAttribute('disabled', 'true');
                 injectBtn.style.opacity = '0.5';
                 document.getElementById('iw-status').textContent = '';
@@ -242,6 +252,7 @@
                 return;
             }
 
+            // Track selected items to inject normally
             checkboxes.forEach(cb => {
                 const arrKey = cb.dataset.arrayKey;
                 const idx = cb.dataset.itemIndex;
@@ -254,7 +265,8 @@
                 const existingIdx = currentWorld[arrKey].findIndex(ex => 
                     (newItem.id && ex.id === newItem.id) || 
                     (newItem.name && ex.name === newItem.name) || 
-                    (newItem.variableName && ex.variableName === newItem.variableName)
+                    (newItem.variableName && ex.variableName === newItem.variableName) ||
+                    (newItem.title && ex.title === newItem.title)
                 );
 
                 if (existingIdx >= 0) {
@@ -262,13 +274,31 @@
                 } else {
                     currentWorld[arrKey].push(newItem);
                 }
+
+                // Dependency Rule: If importing a possibleCharacter, check and auto-import required skills
+                if (arrKey === 'possibleCharacters' && Array.isArray(newItem.skills) && Array.isArray(extractedData['skills'])) {
+                    if (!Array.isArray(currentWorld['skills'])) {
+                        currentWorld['skills'] = [];
+                    }
+                    newItem.skills.forEach(requiredSkillId => {
+                        // Check if skill already exists in current world
+                        const skillExists = currentWorld['skills'].some(s => s.id === requiredSkillId || s.name === requiredSkillId || s.variableName === requiredSkillId);
+                        if (!skillExists) {
+                            // Find skill in extracted source data
+                            const matchingSkill = extractedData['skills'].find(s => s.id === requiredSkillId || s.name === requiredSkillId || s.variableName === requiredSkillId);
+                            if (matchingSkill) {
+                                currentWorld['skills'].push(matchingSkill);
+                            }
+                        }
+                    });
+                }
             });
 
             ta.value = JSON.stringify(currentWorld, null, 4);
             ta.dispatchEvent(new Event('input', { bubbles: true }));
             ta.dispatchEvent(new Event('change', { bubbles: true }));
             btn.click();
-            alert('Selected items successfully injected and imported into your active world!');
+            alert('Selected items (and any dependent skills) successfully injected and imported into your active world!');
         } catch(e) {
             alert('Injection Error: ' + e.message);
         }
