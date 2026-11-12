@@ -1,6 +1,6 @@
 # Infinite Worlds Cloud & File Sync Workbench
 
-A lightweight, auto-updating multi-tab bookmarklet tool designed for **Infinite Worlds** to easily backup world JSON files, discover and load preset worlds straight from GitHub, selectively merge data (such as Specialist Instructions, `instructionBlocks`, `triggerEvents`, and `trackedItems`), and directly inspect JSON structures using the new built-in JSON Workbench tab.
+A lightweight, auto-updating multi-tab bookmarklet tool designed for **Infinite Worlds** to easily backup world JSON files, discover and load preset worlds straight from GitHub, selectively merge data (such as Specialist Instructions, `instructionBlocks`, `triggerEvents`, and `trackedItems`), and directly inspect JSON structures using the built-in JSON Workbench tab.
 
 ---
 
@@ -11,7 +11,7 @@ A lightweight, auto-updating multi-tab bookmarklet tool designed for **Infinite 
 3. Paste the following snippet into the **URL / Address** field:
 
 ```javascript
-javascript:(function(){const s=document.createElement('script');s.src='[https://raw.githack.com/hummingbird-tori/infinite-worlds-script-bookmarklet/main/loader.js';document.head.appendChild(s](https://raw.githack.com/hummingbird-tori/infinite-worlds-script-bookmarklet/main/loader.js';document.head.appendChild(s));})();
+javascript:(function(){const s=document.createElement('script');s.src='https://raw.githack.com/hummingbird-tori/infinite-worlds-script-bookmarklet/main/loader.js';document.head.appendChild(s);})();
 
 ```
 
@@ -48,13 +48,10 @@ javascript:(function(){const s=document.createElement('script');s.src='[https://
 Want to host your own library of preset worlds and scripts? Feel free to fork this repository:
 
 1. **Fork this repo** to your own GitHub account.
-2. Open `loader.js` and update the `REPO_API_URL` constant inside `SCRIPT_CONFIG` to point to your GitHub username and repository:
+2. Open `loader.js` and update the `REPO_API_URL` constant near the top of the file to point to your GitHub username and repository:
 
 ```javascript
-const SCRIPT_CONFIG = {
-    VERSION: "v3.2 (Single-File Modular)",
-    REPO_API_URL: "[https://api.github.com/repos/YOUR-USERNAME/YOUR-REPO-NAME/contents/script-jsons](https://api.github.com/repos/YOUR-USERNAME/YOUR-REPO-NAME/contents/script-jsons)"
-};
+const REPO_API_URL = "https://api.github.com/repos/YOUR-USERNAME/YOUR-REPO-NAME/contents/script-jsons";
 
 ```
 
