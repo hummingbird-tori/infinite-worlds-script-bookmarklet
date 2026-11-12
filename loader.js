@@ -2,8 +2,63 @@
     if (document.getElementById('iw-modal')) return;
 
     // --- CONFIGURATION & VERSION ---
-    const SCRIPT_VERSION = "v3.3";
+    const SCRIPT_VERSION = "v3.4";
     const REPO_API_URL = "https://api.github.com/repos/hummingbird-tori/infinite-worlds-script-bookmarklet/contents/script-jsons";
+
+    // --- DOM UTILITIES ---
+    function getBtn(t) {
+        for (let b of document.querySelectorAll('button')) {
+            if (b.textContent && b.textContent.includes(t)) return b;
+        }
+        return null;
+    }
+
+    function getJsonBox() {
+        const btn = getBtn('Refresh raw JSON');
+        if (btn) {
+            let p = btn.parentElement;
+            while (p && p !== document.body) {
+                const ta = p.querySelector('textarea.anvil-text-area');
+                if (ta) return ta;
+                p = p.parentElement;
+            }
+        }
+        for (let ta of document.querySelectorAll('textarea.anvil-text-area')) {
+            if (ta.clientHeight > 200 || (ta.value && (ta.value.includes('possibleCharacters') || ta.value.includes('descriptionRequest')))) return ta;
+        }
+        return document.querySelector('textarea.anvil-text-area');
+    }
+
+    function getActiveWorldJson() {
+        const ta = getJsonBox();
+        if (!ta || !ta.value.trim()) return null;
+        try {
+            return JSON.parse(ta.value);
+        } catch(e) {
+            return null;
+        }
+    }
+
+    // --- CLOUD SYNC TAB ---
+    function renderSyncTab(container) {
+        container.innerHTML = `
+            <div style="background:#1f1e26;padding:10px 12px;border-radius:6px;border:1px solid #3f3c4d;display:flex;flex-direction:column;gap:6px;">
+                <label style="font-size:12px;color:#818cf8;font-weight:600;">Discovered Presets from GitHub (/script-jsons):</label>
+                <div style="display:flex;gap:8px;">
+                    <select id="iw-preset-select" style="background:#111015;color:#fff;border:1px solid #3f3c4d;border-radius:4px;padding:6px;font-size:12px;flex-grow:1;">
+                        <option value="">-- Loading discovered presets... --</option>
+                    </select>
+That is an essential flag to make sure the app correctly registers and processes those injected fields. 
+
+Here is the updated `loader.js` file with `enableAISpecificInstructionBlock: true` explicitly injected into the world object whenever data is merged or imported.
+
+```javascript
+(function() {
+    if (document.getElementById('iw-modal')) return;
+
+    // --- CONFIGURATION & VERSION ---
+    const SCRIPT_VERSION = "v3.4";
+    const REPO_API_URL = "[https://api.github.com/repos/hummingbird-tori/infinite-worlds-script-bookmarklet/contents/script-jsons](https://api.github.com/repos/hummingbird-tori/infinite-worlds-script-bookmarklet/contents/script-jsons)";
 
     // --- DOM UTILITIES ---
     function getBtn(t) {
@@ -300,6 +355,9 @@
                         }
                     }
                 });
+
+                // Ensure the required AI instruction block flag is set to true on merge
+                currentWorld.enableAISpecificInstructionBlock = true;
 
                 ta.value = JSON.stringify(currentWorld, null, 4);
                 ta.dispatchEvent(new Event('input', { bubbles: true }));
