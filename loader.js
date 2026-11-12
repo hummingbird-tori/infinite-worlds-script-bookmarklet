@@ -2,63 +2,11 @@
     if (document.getElementById('iw-modal')) return;
 
     // --- CONFIGURATION & VERSION ---
-    const SCRIPT_VERSION = "v3.4";
+    const SCRIPT_VERSION = "v3.5";
     const REPO_API_URL = "https://api.github.com/repos/hummingbird-tori/infinite-worlds-script-bookmarklet/contents/script-jsons";
 
-    // --- DOM UTILITIES ---
-    function getBtn(t) {
-        for (let b of document.querySelectorAll('button')) {
-            if (b.textContent && b.textContent.includes(t)) return b;
-        }
-        return null;
-    }
-
-    function getJsonBox() {
-        const btn = getBtn('Refresh raw JSON');
-        if (btn) {
-            let p = btn.parentElement;
-            while (p && p !== document.body) {
-                const ta = p.querySelector('textarea.anvil-text-area');
-                if (ta) return ta;
-                p = p.parentElement;
-            }
-        }
-        for (let ta of document.querySelectorAll('textarea.anvil-text-area')) {
-            if (ta.clientHeight > 200 || (ta.value && (ta.value.includes('possibleCharacters') || ta.value.includes('descriptionRequest')))) return ta;
-        }
-        return document.querySelector('textarea.anvil-text-area');
-    }
-
-    function getActiveWorldJson() {
-        const ta = getJsonBox();
-        if (!ta || !ta.value.trim()) return null;
-        try {
-            return JSON.parse(ta.value);
-        } catch(e) {
-            return null;
-        }
-    }
-
-    // --- CLOUD SYNC TAB ---
-    function renderSyncTab(container) {
-        container.innerHTML = `
-            <div style="background:#1f1e26;padding:10px 12px;border-radius:6px;border:1px solid #3f3c4d;display:flex;flex-direction:column;gap:6px;">
-                <label style="font-size:12px;color:#818cf8;font-weight:600;">Discovered Presets from GitHub (/script-jsons):</label>
-                <div style="display:flex;gap:8px;">
-                    <select id="iw-preset-select" style="background:#111015;color:#fff;border:1px solid #3f3c4d;border-radius:4px;padding:6px;font-size:12px;flex-grow:1;">
-                        <option value="">-- Loading discovered presets... --</option>
-                    </select>
-That is an essential flag to make sure the app correctly registers and processes those injected fields. 
-
-Here is the updated `loader.js` file with `enableAISpecificInstructionBlock: true` explicitly injected into the world object whenever data is merged or imported.
-
-```javascript
-(function() {
-    if (document.getElementById('iw-modal')) return;
-
-    // --- CONFIGURATION & VERSION ---
-    const SCRIPT_VERSION = "v3.4";
-    const REPO_API_URL = "[https://api.github.com/repos/hummingbird-tori/infinite-worlds-script-bookmarklet/contents/script-jsons](https://api.github.com/repos/hummingbird-tori/infinite-worlds-script-bookmarklet/contents/script-jsons)";
+    // --- SUPPORTED ARRAYS LIST ---
+    const SUPPORTED_ARRAYS = ['skills', 'possibleCharacters', 'NPCs', 'loreBookEntries', 'instructionBlocks', 'triggerEvents', 'trackedItems'];
 
     // --- DOM UTILITIES ---
     function getBtn(t) {
@@ -281,8 +229,7 @@ Here is the updated `loader.js` file with `enableAISpecificInstructionBlock: tru
                     });
                 }
 
-                const arrays = ['skills', 'possibleCharacters', 'NPCs', 'loreBookEntries', 'instructionBlocks', 'triggerEvents', 'trackedItems'];
-                arrays.forEach(arrKey => {
+                SUPPORTED_ARRAYS.forEach(arrKey => {
                     if (Array.isArray(extractedData[arrKey]) && extractedData[arrKey].length > 0) {
                         const secClass = 'sec-' + arrKey;
                         createHeader('--- ' + arrKey + ' (' + extractedData[arrKey].length + ') ---', '#818cf8', secClass);
@@ -356,7 +303,6 @@ Here is the updated `loader.js` file with `enableAISpecificInstructionBlock: tru
                     }
                 });
 
-                // Ensure the required AI instruction block flag is set to true on merge
                 currentWorld.enableAISpecificInstructionBlock = true;
 
                 ta.value = JSON.stringify(currentWorld, null, 4);
@@ -370,57 +316,134 @@ Here is the updated `loader.js` file with `enableAISpecificInstructionBlock: tru
         };
     }
 
-    // --- JSON WORKBENCH TAB ---
+    // --- JSON WORKBENCH TAB (Targeted Array Manager & Reorderer) ---
     function renderEditorTab(container) {
         container.innerHTML = `
-            <div style="background:#1f1e26;padding:12px;border-radius:6px;border:1px solid #3f3c4d;display:flex;flex-direction:column;gap:8px;">
-                <h4 style="margin:0;color:#818cf8;font-size:13px;">Direct JSON Workbench & Reorder</h4>
-                <p style="margin:0;font-size:11px;color:#9ca3af;">Inspect and reorder active world elements directly or push custom JSON objects.</p>
-                
-                <div style="display:flex;gap:8px;">
-                    <button id="iw-edit-refresh" style="background:#4f46e5;color:#fff;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">Load Active World Data</button>
+            <div style="background:#1f1e26;padding:10px 12px;border-radius:6px;border:1px solid #3f3c4d;display:flex;flex-direction:column;gap:6px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <h4 style="margin:0;color:#818cf8;font-size:13px;">Targeted Array Workbench & Reorder</h4>
+                    <button id="iw-edit-refresh" style="background:#4f46e5;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">Load Active World Arrays</button>
                 </div>
+                <p style="margin:0;font-size:11px;color:#9ca3af;">Manage, reorder, or remove items specifically within your merge arrays.</p>
             </div>
             
-            <div id="iw-editor-output" style="background:#111015;border:1px solid #3f3c4d;border-radius:6px;padding:8px;max-height:220px;overflow-y:auto;font-size:11px;color:#d1d5db;">
-                <em>Click "Load Active World Data" to inspect arrays and reorder items.</em>
+            <div id="iw-editor-output" style="background:#111015;border:1px solid #3f3c4d;border-radius:6px;padding:8px;max-height:300px;overflow-y:auto;font-size:11px;color:#d1d5db;">
+                <em>Click "Load Active World Arrays" above to inspect and organize your arrays.</em>
             </div>
         `;
 
+        const out = container.querySelector('#iw-editor-output');
+
+        function commitWorldChanges(world) {
+            const ta = getJsonBox();
+            const btn = getBtn('Import JSON to world');
+            if (!ta || !btn) {
+                alert('App JSON box or import button not found. Make sure you refreshed raw JSON in the app.');
+                return false;
+            }
+            try {
+                ta.value = JSON.stringify(world, null, 4);
+                ta.dispatchEvent(new Event('input', { bubbles: true }));
+                ta.dispatchEvent(new Event('change', { bubbles: true }));
+                btn.click();
+                return true;
+            } catch(e) {
+                alert('Error saving changes: ' + e.message);
+                return false;
+            }
+        }
+
         container.querySelector('#iw-edit-refresh').onclick = () => {
             const world = getActiveWorldJson();
-            const out = container.querySelector('#iw-editor-output');
             if (!world) {
-                out.innerHTML = '<span style="color:#ef4444;">Could not read active world JSON. Make sure you refreshed raw JSON in the app.</span>';
+                out.innerHTML = '<span style="color:#ef4444;">Could not read active world JSON. Make sure you clicked "Refresh raw JSON" in the app first.</span>';
                 return;
             }
 
             out.innerHTML = '';
             
-            Object.keys(world).forEach(key => {
-                if (Array.isArray(world[key])) {
-                    const section = document.createElement('div');
-                    section.style.cssText = 'margin-bottom:8px;padding:6px;background:#17161c;border-radius:4px;border:1px solid #2d2a38;';
-                    
-                    const title = document.createElement('div');
-                    title.style.cssText = 'font-weight:bold;color:#f59e0b;font-size:11px;margin-bottom:4px;';
-                    title.textContent = `${key} (${world[key].length} items)`;
-                    section.appendChild(title);
+            SUPPORTED_ARRAYS.forEach(arrKey => {
+                if (!Array.isArray(world[arrKey])) world[arrKey] = [];
+                const arr = world[arrKey];
 
-                    world[key].forEach((item, idx) => {
+                const section = document.createElement('div');
+                section.style.cssText = 'margin-bottom:10px;padding:8px;background:#17161c;border-radius:4px;border:1px solid #2d2a38;';
+                
+                const header = document.createElement('div');
+                header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;font-weight:bold;color:#f59e0b;font-size:12px;margin-bottom:6px;border-bottom:1px solid #222;padding-bottom:4px;';
+                
+                const titleSpan = document.createElement('span');
+                titleSpan.textContent = `${arrKey} (${arr.length} items)`;
+                header.appendChild(titleSpan);
+                section.appendChild(header);
+
+                if (arr.length === 0) {
+                    const empty = document.createElement('div');
+                    empty.style.cssText = 'font-size:11px;color:#6b7280;font-style:italic;padding:2px 0;';
+                    empty.textContent = 'No items in this array.';
+                    section.appendChild(empty);
+                } else {
+                    const list = document.createElement('div');
+                    list.style.cssText = 'display:flex;flex-direction:column;gap:4px;';
+
+                    arr.forEach((item, idx) => {
                         const row = document.createElement('div');
-                        row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:2px 0;font-size:10px;border-bottom:1px solid #222;';
+                        row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:4px 6px;background:#111015;border-radius:4px;border:1px solid #222;font-size:11px;';
                         
-                        const name = typeof item === 'string' ? item : (item.name || item.title || item.variableName || `Index ${idx}`);
-                        const span = document.createElement('span');
-                        span.textContent = `${idx + 1}. ${name}`;
-                        
-                        row.appendChild(span);
-                        section.appendChild(row);
-                    });
+                        const name = typeof item === 'string' ? item : (item.name || item.variableName || item.title || `Item #${idx + 1}`);
+                        const nameSpan = document.createElement('span');
+                        nameSpan.style.cssText = 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:340px;color:#e5e7eb;';
+                        nameSpan.textContent = `${idx + 1}. ${name}`;
+                        row.appendChild(nameSpan);
 
-                    out.appendChild(section);
+                        const btnGroup = document.createElement('div');
+                        btnGroup.style.cssText = 'display:flex;gap:4px;align-items:center;';
+
+                        // Move Up
+                        const upBtn = document.createElement('button');
+                        upBtn.textContent = '▲';
+                        upBtn.style.cssText = `background:#374151;color:#fff;border:none;padding:2px 6px;border-radius:3px;cursor:pointer;font-size:10px;${idx === 0 ? 'opacity:0.3;cursor:default;' : ''}`;
+                        upBtn.onclick = () => {
+                            if (idx === 0) return;
+                            const temp = arr[idx];
+                            arr[idx] = arr[idx - 1];
+                            arr[idx - 1] = temp;
+                            if (commitWorldChanges(world)) container.querySelector('#iw-edit-refresh').click();
+                        };
+
+                        // Move Down
+                        const downBtn = document.createElement('button');
+                        downBtn.textContent = '▼';
+                        downBtn.style.cssText = `background:#374151;color:#fff;border:none;padding:2px 6px;border-radius:3px;cursor:pointer;font-size:10px;${idx === arr.length - 1 ? 'opacity:0.3;cursor:default;' : ''}`;
+                        downBtn.onclick = () => {
+                            if (idx === arr.length - 1) return;
+                            const temp = arr[idx];
+                            arr[idx] = arr[idx + 1];
+                            arr[idx + 1] = temp;
+                            if (commitWorldChanges(world)) container.querySelector('#iw-edit-refresh').click();
+                        };
+
+                        // Delete
+                        const delBtn = document.createElement('button');
+                        delBtn.textContent = '✕';
+                        delBtn.style.cssText = 'background:#7f1d1d;color:#fca5a5;border:none;padding:2px 6px;border-radius:3px;cursor:pointer;font-size:10px;';
+                        delBtn.onclick = () => {
+                            if (confirm(`Remove "${name}" from ${arrKey}?`)) {
+                                arr.splice(idx, 1);
+                                if (commitWorldChanges(world)) container.querySelector('#iw-edit-refresh').click();
+                            }
+                        };
+
+                        btnGroup.appendChild(upBtn);
+                        btnGroup.appendChild(downBtn);
+                        btnGroup.appendChild(delBtn);
+                        row.appendChild(btnGroup);
+                        list.appendChild(row);
+                    });
+                    section.appendChild(list);
                 }
+
+                out.appendChild(section);
             });
         };
     }
