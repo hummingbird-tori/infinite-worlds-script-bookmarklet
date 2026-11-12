@@ -306,7 +306,7 @@
                     }
                 });
 
-                currentWorld.enableAISpecificInstructionBlock = true;
+                currentWorld.enableAISpecificInstructionBlocks = true;
 
                 ta.value = JSON.stringify(currentWorld, null, 4);
                 ta.dispatchEvent(new Event('input', { bubbles: true }));
