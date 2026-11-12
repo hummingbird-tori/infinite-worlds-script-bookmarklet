@@ -1,3 +1,4 @@
+//Protoype loader. Still accessible with this link
 (function() {
     if (document.getElementById('iw-sync-modal')) return;
 
