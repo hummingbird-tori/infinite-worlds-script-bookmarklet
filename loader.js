@@ -1,13 +1,11 @@
 (function() {
     if (document.getElementById('iw-modal')) return;
 
-    // --- 1. CONFIG & VERSION ---
-    const SCRIPT_CONFIG = {
-        VERSION: "v3.2 (Single-File Modular)",
-        REPO_API_URL: "https://api.github.com/repos/hummingbird-tori/infinite-worlds-script-bookmarklet/contents/script-jsons"
-    };
+    // --- CONFIGURATION & VERSION ---
+    const SCRIPT_VERSION = "v3.3";
+    const REPO_API_URL = "https://api.github.com/repos/hummingbird-tori/infinite-worlds-script-bookmarklet/contents/script-jsons";
 
-    // --- 2. DOM UTILITIES (from src/utils/dom.js) ---
+    // --- DOM UTILITIES ---
     function getBtn(t) {
         for (let b of document.querySelectorAll('button')) {
             if (b.textContent && b.textContent.includes(t)) return b;
@@ -41,7 +39,7 @@
         }
     }
 
-    // --- 3. CLOUD SYNC TAB (from src/tabs/syncTab.js) ---
+    // --- CLOUD SYNC TAB ---
     function renderSyncTab(container) {
         container.innerHTML = `
             <div style="background:#1f1e26;padding:10px 12px;border-radius:6px;border:1px solid #3f3c4d;display:flex;flex-direction:column;gap:6px;">
@@ -82,7 +80,7 @@
 
         async function discoverPresets() {
             try {
-                const response = await fetch(SCRIPT_CONFIG.REPO_API_URL);
+                const response = await fetch(REPO_API_URL);
                 if (!response.ok) throw new Error('Failed to fetch repo contents');
                 const files = await response.json();
                 
@@ -314,7 +312,7 @@
         };
     }
 
-    // --- 4. JSON WORKBENCH TAB (from src/tabs/editorTab.js) ---
+    // --- JSON WORKBENCH TAB ---
     function renderEditorTab(container) {
         container.innerHTML = `
             <div style="background:#1f1e26;padding:12px;border-radius:6px;border:1px solid #3f3c4d;display:flex;flex-direction:column;gap:8px;">
@@ -369,7 +367,7 @@
         };
     }
 
-    // --- 5. MAIN MODAL & TAB COORDINATOR (from src/index.js) ---
+    // --- MAIN MODAL & TAB COORDINATOR ---
     const modal = document.createElement('div');
     modal.id = 'iw-modal';
     modal.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:760px;max-height:85vh;background:#17161c;color:#f3f4f6;border:1px solid #3f3c4d;border-radius:10px;z-index:99999;font-family:sans-serif;display:flex;flex-direction:column;box-shadow:0 10px 25px rgba(0,0,0,0.5);';
@@ -382,7 +380,7 @@
                     <button id="iw-tab-sync-btn" style="background:#4f46e5;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">Cloud Sync</button>
                     <button id="iw-tab-editor-btn" style="background:transparent;color:#9ca3af;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">JSON Workbench</button>
                 </div>
-                <span style="background:#374151;color:#9ca3af;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;">${SCRIPT_CONFIG.VERSION}</span>
+                <span style="background:#374151;color:#9ca3af;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;">${SCRIPT_VERSION}</span>
             </div>
             <button id="iw-close" style="background:none;border:none;color:#9ca3af;font-size:18px;cursor:pointer;">&times;</button>
         </div>
