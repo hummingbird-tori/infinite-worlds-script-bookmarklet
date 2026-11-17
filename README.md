@@ -11,8 +11,7 @@ A lightweight, auto-updating multi-tab bookmarklet tool designed for **Infinite 
 3. Paste the following snippet into the **URL / Address** field:
 
 ```javascript
-javascript:(function(){const s=document.createElement('script');s.src='[https://raw.githack.com/hummingbird-tori/infinite-worlds-script-bookmarklet/main/loader.js';document.head.appendChild(s](https://raw.githack.com/hummingbird-tori/infinite-worlds-script-bookmarklet/main/loader.js';document.head.appendChild(s));})();
-
+javascript:(function(){const s=document.createElement('script');s.src='https://raw.githack.com/hummingbird-tori/infinite-worlds-script-bookmarklet/main/loader.js';document.head.appendChild(s);})();
 ```
 
 *(Because this points to `raw.githack.com`, updates pushed to the repository automatically load the next time you click the bookmark—no manual reinstalling required.)*
