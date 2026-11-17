@@ -22,7 +22,7 @@ javascript:(function(){const s=document.createElement('script');s.src='https://r
 
 1. **Open Your World:** Open your world in the **Infinite Worlds World Editor**.
 2. **Enable Raw JSON:**
-* Check **"Shop optional features"**.
+* Check **"Show optional features"**.
 * Click **"Misc advanced features (experimental)"**.
 * Select **"Show Raw Json"** and click **"Refresh raw JSON"** so the tool can detect your active world's data container.
 
